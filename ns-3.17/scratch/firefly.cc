@@ -44,16 +44,16 @@ FireflySyncTimer::~FireflySyncTimer()
 {
 }
 
-void FireflySyncTimer::expire(Ptr<EventImpl> e, Ptr<Node> node)
+void FireflySyncTimer::expire(Ptr<EventImpl> e, Ptr<Socket> m_socket)
 {
-	m_agent->timeout(0, node);
+	m_agent->timeout(0, m_socket);
 }
 void FireflySyncTimer::setAgent(FireflyUdpAgent *agent)
 {
 		m_agent = agent;
 }
 
-void FireflyUdpAgent::timeout(int x, Ptr<Node> node)
+void FireflyUdpAgent::timeout(int x, Ptr<Socket> m_socket)
 {
     //printf("%02d: funcion Timeout\n", (int)addr());
 	if (m_status)
@@ -86,7 +86,7 @@ void FireflyUdpAgent::timeout(int x, Ptr<Node> node)
 				data->CopyData (os, sizeof(FireflyData));
 				memcpy((char*) os, &Firefly_data, sizeof(FireflyData));
 				val=true;
-				sendmsg(sizeof(FireflyData), data, node, val);//IP_BROADCAST
+				sendmsg(sizeof(FireflyData), data, m_socket, val);//IP_BROADCAST
                             	break;
 
 			case READY:
@@ -100,7 +100,7 @@ void FireflyUdpAgent::timeout(int x, Ptr<Node> node)
 				data->CopyData (os, sizeof(FireflyData));
 				memcpy((char*) os, &Firefly_data, sizeof(FireflyData));
 				val=false;
-				sendmsg(sizeof(FireflyData), data, node, val);//m_reference
+				sendmsg(sizeof(FireflyData), data, m_socket, val);//m_reference
 
 				break;
 
@@ -138,7 +138,7 @@ double FireflyUdpAgent::increment_decrement(double x, double y)
 
 }
 
-void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Node> node)
+void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Socket> m_socket)
 {
 	Ptr<Packet> data;
 	if (m_status)
@@ -166,7 +166,7 @@ void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Node> node)
 					uint8_t *buffer = new uint8_t[sizeof(FireflyData)];
 					memcpy((char*) buffer, &Firefly_data, sizeof(FireflyData));
 					data = Create<Packet> (buffer, sizeof(FireflyData));
-					sendmsg(sizeof(FireflyData), data, node, val);
+					sendmsg(sizeof(FireflyData), data, m_socket, val);
 				}
 				break;
 \
@@ -191,7 +191,7 @@ void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Node> node)
                                         uint8_t *buffer = new uint8_t[sizeof(FireflyData)];
 					memcpy((char*) buffer, &Firefly_data, sizeof(FireflyData));
 					data = Create<Packet> (buffer, sizeof(FireflyData));
-					sendmsg(sizeof(FireflyData), data, node, val);
+					sendmsg(sizeof(FireflyData), data, m_socket, val);
 
                      //           }
                          }
@@ -206,7 +206,7 @@ void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Node> node)
                                uint8_t *buffer = new uint8_t[sizeof(FireflyData)];
 			       memcpy((char*) buffer, &Firefly_data, sizeof(FireflyData));
 			       data = Create<Packet> (buffer, sizeof(FireflyData));
-			       sendmsg(sizeof(FireflyData), data, node, val);
+			       sendmsg(sizeof(FireflyData), data, m_socket, val);
                            }
                        break;
 
@@ -247,7 +247,7 @@ void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Node> node)
 			uint8_t *buffer = new uint8_t[sizeof(FireflyData)];
 			memcpy((char*) buffer, &Firefly_data, sizeof(FireflyData));
 			data = Create<Packet> (buffer, sizeof(FireflyData));
-			sendmsg(sizeof(FireflyData), data, node, val);
+			sendmsg(sizeof(FireflyData), data, m_socket, val);
 			//m_Firefly_sync_timer.resched(m_interval);
 		}
 		break;
@@ -264,7 +264,7 @@ void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Node> node)
 }
 
 
-void FireflyUdpAgent::sendmsg(int nbytes, Ptr<Packet> data, Ptr<Node> node, bool val, const char *flags)
+void FireflyUdpAgent::sendmsg(int nbytes, Ptr<Packet> data, Ptr<Socket> m_socket, bool val, const char *flags)
 {
 	if (m_status)
 	{
@@ -274,7 +274,6 @@ void FireflyUdpAgent::sendmsg(int nbytes, Ptr<Packet> data, Ptr<Node> node, bool
 		memcpy(&Firefly_data, (char*) buffer, sizeof(FireflyData));
 		++m_sent_message_count[Firefly_data.type];
 		uint16_t m_port;
-  		Ptr<Socket> m_socket;
 
 		//printf("Node:%2d-Firefly node sent message\n",(int)addr());
 
@@ -302,30 +301,22 @@ void FireflyUdpAgent::sendmsg(int nbytes, Ptr<Packet> data, Ptr<Node> node, bool
 		{
 			//printf("entered sendmsg----------\n");
 			p = Create<Packet> (buffer, sizeof(FireflyData));
-			TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
-      			m_socket = Socket::CreateSocket (node, tid);
-      			InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), m_port);
-      			m_socket->Bind (local);
 			m_socket->Send (p);
-			recv(p, node);
+			recv(p, m_socket);
 		}
 		n = nbytes % size;
 		if (n > 0)
 		{	//printf("entered sendmsg-@@@@@@@@@@@@@@---------\n");
 			p = Create<Packet> (buffer, sizeof(FireflyData));
-			TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
-      			m_socket = Socket::CreateSocket (node, tid);
-      			InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), m_port);
-      			m_socket->Bind (local);
 			m_socket->Send (p);
-			recv(p, node);
+			recv(p, m_socket);
 		}
 	}
 	//idle();
 	//printf("exiting from sendmsg");
  }
 
-void FireflyUdpAgent::command(const char* cmd, Ptr<Node> node)
+void FireflyUdpAgent::command(const char* cmd, Ptr<Socket> m_socket)
 {
 	Ptr<Packet> data;
 	if (strcmp(cmd, "sync") == 0)
@@ -340,7 +331,7 @@ void FireflyUdpAgent::command(const char* cmd, Ptr<Node> node)
 	    uint8_t *buffer = new uint8_t[sizeof(FireflyData)];
 	    memcpy((char*) buffer, &Firefly_data, sizeof(FireflyData));
 	    data = Create<Packet> (buffer, sizeof(FireflyData));
-	    sendmsg(sizeof(FireflyData), data, node, val);
+	    sendmsg(sizeof(FireflyData), data, m_socket, val);
             //m_Firefly_sync_timer.resched(m_interval);
 	}
 
@@ -367,7 +358,7 @@ void FireflyUdpAgent::command(const char* cmd, Ptr<Node> node)
 	        uint8_t *buffer = new uint8_t[sizeof(FireflyData)];
 	        memcpy((char*) buffer, &Firefly_data, sizeof(FireflyData));
 	        data = Create<Packet> (buffer, sizeof(FireflyData));
-	        sendmsg(sizeof(FireflyData), data, node, val);
+	        sendmsg(sizeof(FireflyData), data, m_socket, val);
 		printf("exiting from setasroot\n\n");
 	}
 	if (strcmp(cmd, "initialise") == 0)
@@ -547,7 +538,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Assign IP Addresses.");
   ipv4.SetBase ("10.1.1.0", "255.255.255.0");
   // IP addresses are only assigned for control devices
-  Ipv4InterfaceContainer i = ipv4.Assign (devices_control);
+  Ipv4InterfaceContainer interfaceip = ipv4.Assign (devices_control);
 
   uint16_t port = 9;
 
@@ -557,11 +548,26 @@ int main (int argc, char *argv[])
 
   FireflyUdpAgent fudp;
 
+  Ptr<Socket> socket_array[2*nNodes-1];
+
+  TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
+
+  for (int i=0;i<c.GetN()-1;i++)
+{
+   socket_array[2*i+1] = Socket::CreateSocket (c.Get (2*i+1), tid); //receive socket
+   InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 4477);
+   socket_array[2*i+1]->Bind (local);
+ 
+   socket_array[2*i] = Socket::CreateSocket (c.Get (2*i), tid); //sending socket
+   InetSocketAddress remote = InetSocketAddress (interfaceip.GetAddress (i+1), 4477);
+   socket_array[2*i]->Connect(remote);
+}
+
   for (int i=0;i<c.GetN()-1;i++)
 {
 	for (int j=i+1;j<c.GetN();j++)
 	{
-	Simulator::Schedule(Seconds (0), &FireflyUdpAgent::command, &fudp, "sync", c.Get(0));//connect and then sync	
+	Simulator::Schedule(Seconds (0), &FireflyUdpAgent::command, &fudp, "sync", socket_array[2*i]);//connect and then sync	
 	}
 }
 

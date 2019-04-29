@@ -78,7 +78,7 @@ class FireflySyncTimer
             ~FireflySyncTimer();
             void setAgent(FireflyUdpAgent *agent);
     protected:
-            void expire(Ptr<EventImpl> event, Ptr<Node> node);
+            void expire(Ptr<EventImpl> event, Ptr<Socket> m_socket);
             FireflyUdpAgent *m_agent;
     private:
 };
@@ -87,10 +87,10 @@ class FireflyUdpAgent
 {
 public:
 	FireflyUdpAgent();
-	void sendmsg(int nbytes, Ptr<Packet> data, Ptr<Node> node, bool val, const char *flags = 0);
-	void recv(Ptr<Packet> pckt, Ptr<Node> node);
-	void command(const char* cmd, Ptr<Node> node);
-	void timeout(int, Ptr<Node> node);
+	void sendmsg(int nbytes, Ptr<Packet> data, Ptr<Socket> m_socket, bool val, const char *flags = 0);
+	void recv(Ptr<Packet> pckt, Ptr<Socket> m_socket);
+	void command(const char* cmd, Ptr<Socket> m_socket);
+	void timeout(int, Ptr<Socket> m_socket);
 protected:
 	static double estimatedSourceTimeOffset(double Ljt4, double Lit2,double Lit7, double Ljt6);
 	double localClockCurrent();
