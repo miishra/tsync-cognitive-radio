@@ -77,6 +77,7 @@ class FireflySyncTimer
             FireflySyncTimer();
             ~FireflySyncTimer();
             void setAgent(FireflyUdpAgent *agent);
+	    void resched(double *interval);
     protected:
             void expire(Ptr<EventImpl> event, Ptr<Socket> m_socket);
             FireflyUdpAgent *m_agent;

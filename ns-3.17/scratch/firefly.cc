@@ -53,6 +53,11 @@ void FireflySyncTimer::setAgent(FireflyUdpAgent *agent)
 		m_agent = agent;
 }
 
+void FireflySyncTimer::resched(double *interval)
+{
+	*interval=0;
+}
+
 void FireflyUdpAgent::timeout(int x, Ptr<Socket> m_socket)
 {
     //printf("%02d: funcion Timeout\n", (int)addr());
@@ -141,6 +146,10 @@ double FireflyUdpAgent::increment_decrement(double x, double y)
 void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Socket> m_socket)
 {
 	Ptr<Packet> data;
+	uint32_t availableData;
+  	//availableData = m_socket->GetRxAvailable ();
+  	Ptr<Packet> m_receivedPacket = m_socket->Recv (std::numeric_limits<uint32_t>::max (), 0);
+  	//NS_ASSERT (availableData == m_receivedPacket->GetSize ());
 	if (m_status)
 	{
 		//printf("enterd recv function\n");
@@ -283,7 +292,7 @@ void FireflyUdpAgent::sendmsg(int nbytes, Ptr<Packet> data, Ptr<Socket> m_socket
 		assert(size> 0);
 
 		n = nbytes / size;
-		//printf("the value of n=%d",n);
+		//printf("the value of nbytes=%d",nbytes);
 		if (nbytes == -1)
 		{
 			printf("Error:sendmsg() for UDP should not be -1\n");
@@ -321,21 +330,21 @@ void FireflyUdpAgent::command(const char* cmd, Ptr<Socket> m_socket)
 	Ptr<Packet> data;
 	if (strcmp(cmd, "sync") == 0)
 	{
-	    //NS_LOG_UNCOND ("\nentered command\n");
+	    //NS_LOG_UNCOND ("\nentered command\n");	
             m_status=true;
             FireflyData Firefly_data;
             m_state = SYNCING;
             Firefly_data.type = SYNC_PULSE_PACKET;
             Firefly_data.s_sent_ts = localClockCurrent();
+	    //printf("%lf", Firefly_data.s_sent_ts);
 	    bool val=true;
 	    uint8_t *buffer = new uint8_t[sizeof(FireflyData)];
 	    memcpy((char*) buffer, &Firefly_data, sizeof(FireflyData));
 	    data = Create<Packet> (buffer, sizeof(FireflyData));
 	    sendmsg(sizeof(FireflyData), data, m_socket, val);
-            //m_Firefly_sync_timer.resched(m_interval);
+            m_firefly_sync_timer.resched(&m_interval);//particular node
 	}
 
-	//si foi estabelecido o nó como nodo GPS
         if (strcmp(cmd, "setasGPS") == 0)
 	{
 		FireflyData Firefly_data;
@@ -458,7 +467,7 @@ int main (int argc, char *argv[])
 {
     SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
-  int nNodes = 2;
+  int nNodes = 5;
 
   CommandLine cmd;
 
@@ -548,59 +557,55 @@ int main (int argc, char *argv[])
 
   FireflyUdpAgent fudp;
 
-  Ptr<Socket> socket_array[2*nNodes-1];
+  Ptr<Socket> socket_array[nNodes];
 
   TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
 
-  for (int i=0;i<c.GetN()-1;i++)
+  for (int i=0;i<c.GetN();i++)
 {
-   socket_array[2*i+1] = Socket::CreateSocket (c.Get (2*i+1), tid); //receive socket
-   InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 4477);
-   socket_array[2*i+1]->Bind (local);
- 
-   socket_array[2*i] = Socket::CreateSocket (c.Get (2*i), tid); //sending socket
-   InetSocketAddress remote = InetSocketAddress (interfaceip.GetAddress (i+1), 4477);
-   socket_array[2*i]->Connect(remote);
+	   socket_array[i] = Socket::CreateSocket (c.Get (i), tid); //receive socket
+	   InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 4477+i);
+	   socket_array[i]->Bind (local);
+	 
+	   /*socket_array[2*i] = Socket::CreateSocket (c.Get (i), tid); //sending socket
+	   InetSocketAddress remote = InetSocketAddress (interfaceip.GetAddress (i+1), 4577+i);
+	   socket_array[2*i]->Connect(remote);*/
 }
 
   for (int i=0;i<c.GetN()-1;i++)
 {
 	for (int j=i+1;j<c.GetN();j++)
 	{
-	Simulator::Schedule(Seconds (0), &FireflyUdpAgent::command, &fudp, "sync", socket_array[2*i]);//connect and then sync	
+	socket_array[i]->Connect(InetSocketAddress (interfaceip.GetAddress (i+1), 4477+i+1));
+	Simulator::Schedule(Seconds (0), &FireflyUdpAgent::command, &fudp, "sync", socket_array[i]);//connect and then sync	
 	}
 }
 
-/*for (int i=0;i<c.GetN();i++)
+for (int i=0;i<c.GetN();i++)
 {
-	Simulator::ScheduleWithContext (c.Get (0)->GetId (), Seconds (0),
-                                        &ErrorNetDevice::Receive);//initialise
+	Simulator::Schedule(Seconds (v->GetValue()), &FireflyUdpAgent::command, &fudp, "initialise", socket_array[i]);
 }
 
 for (int i=0;i<c.GetN();i++)
 {
-	Simulator::ScheduleWithContext (c.Get (0)->GetId (), Seconds (0),
-                                        &ErrorNetDevice::Receive);//setasalive
+	Simulator::Schedule(Seconds (0), &FireflyUdpAgent::command, &fudp, "setasalive", socket_array[i]);
 }
 
-Simulator::ScheduleWithContext (c.Get (0)->GetId (), Seconds (0),
-                                        &ErrorNetDevice::Receive);//setasgps
+Simulator::Schedule(Seconds (0), &FireflyUdpAgent::command, &fudp, "setasgps", socket_array[0]);
 
 for (int i=0;i<c.GetN();i++)
 {
-	Simulator::ScheduleWithContext (c.Get (0)->GetId (), Seconds (0),
-                                        &ErrorNetDevice::Receive);//local_clock
+	Simulator::Schedule(Seconds (20), &FireflyUdpAgent::command, &fudp, "local_clock", socket_array[i]);
 }
 
 for (int i=0;i<c.GetN();i++)
 {
-	Simulator::ScheduleWithContext (c.Get (0)->GetId (), Seconds (0),
-                                        &ErrorNetDevice::Receive);//time complexity
-}*/
+	Simulator::Schedule(Seconds (20), &FireflyUdpAgent::command, &fudp, "time_complexity", socket_array[i]);
+}
 
   NS_LOG_UNCOND ("Starting CR test");
 
-  Simulator::Stop (Seconds (10.0));
+  Simulator::Stop (Seconds (25.0));
   Simulator::Run ();
   Simulator::Destroy ();
 
