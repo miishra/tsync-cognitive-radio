@@ -7,6 +7,8 @@ NS_LOG_COMPONENT_DEFINE ("Firefly");
 using namespace ns3;
 using namespace std;
 
+Ptr<Socket> socket_array[5];
+
 
 double rand_drift_multipier()
 {
@@ -148,7 +150,13 @@ void FireflyUdpAgent::recv(Ptr<Packet> pckt, Ptr<Socket> m_socket)
 	Ptr<Packet> data;
 	uint32_t availableData;
   	//availableData = m_socket->GetRxAvailable ();
-  	Ptr<Packet> m_receivedPacket = m_socket->Recv (std::numeric_limits<uint32_t>::max (), 0);
+  	//Ptr<Packet> m_receivedPacket = m_socket->Recv (std::numeric_limits<uint32_t>::max (), 0);
+	for (int i=0;i<5;i++)
+	{
+		Ptr<Packet> m_receivedPacket = socket_array[i]->Recv (std::numeric_limits<uint32_t>::max (), 0);
+		if (m_receivedPacket)
+			NS_LOG_UNCOND(m_receivedPacket->GetSize ());	
+	}
   	//NS_ASSERT (availableData == m_receivedPacket->GetSize ());
 	if (m_status)
 	{
@@ -292,7 +300,7 @@ void FireflyUdpAgent::sendmsg(int nbytes, Ptr<Packet> data, Ptr<Socket> m_socket
 		assert(size> 0);
 
 		n = nbytes / size;
-		//printf("the value of nbytes=%d",nbytes);
+		//printf("the value of nbytes=%d",n);
 		if (nbytes == -1)
 		{
 			printf("Error:sendmsg() for UDP should not be -1\n");
@@ -310,8 +318,17 @@ void FireflyUdpAgent::sendmsg(int nbytes, Ptr<Packet> data, Ptr<Socket> m_socket
 		{
 			//printf("entered sendmsg----------\n");
 			p = Create<Packet> (buffer, sizeof(FireflyData));
-			m_socket->Send (p);
-			recv(p, m_socket);
+			if (val)
+			{
+				m_socket->SetAllowBroadcast(true);
+				m_socket->SendTo(p, 0, Ipv4Address ("255.255.255.255"));
+				recv(p, m_socket);
+			}
+			else
+			{
+				m_socket->Send (p);
+				recv(p, m_socket);
+			}
 		}
 		n = nbytes % size;
 		if (n > 0)
@@ -556,8 +573,6 @@ int main (int argc, char *argv[])
   v->SetAttribute ("Max", DoubleValue (20));
 
   FireflyUdpAgent fudp;
-
-  Ptr<Socket> socket_array[nNodes];
 
   TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
 
