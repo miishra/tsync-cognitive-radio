@@ -17,6 +17,8 @@ def build(bld):
         'model/packet-loss-counter.cc',
         'model/udp-echo-client.cc',
         'model/udp-echo-server.cc',
+        'model/Bsync_Client.cc',
+        'model/Bsync_Server.cc',
         'model/v4ping.cc',
         'helper/bulk-send-helper.cc',
         'helper/on-off-helper.cc',
@@ -24,6 +26,7 @@ def build(bld):
         'helper/ping6-helper.cc',
         'helper/udp-client-server-helper.cc',
         'helper/udp-echo-helper.cc',
+        'helper/Bsync_App-helper.cc',
         'helper/v4ping-helper.cc',
         ]
 
@@ -49,12 +52,15 @@ def build(bld):
         'model/packet-loss-counter.h',
         'model/udp-echo-client.h',
         'model/udp-echo-server.h',
+        'model/Bsync_Client.h',
+        'model/Bsync_Server.h',
         'model/v4ping.h',
         'helper/bulk-send-helper.h',
         'helper/on-off-helper.h',
         'helper/packet-sink-helper.h',
         'helper/ping6-helper.h',
         'helper/udp-client-server-helper.h',
+        'helper/udp-echo-helper.h',
         'helper/udp-echo-helper.h',
         'helper/v4ping-helper.h',
         ]
