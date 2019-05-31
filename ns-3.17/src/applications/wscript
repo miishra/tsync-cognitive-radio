@@ -62,6 +62,7 @@ def build(bld):
         'helper/udp-client-server-helper.h',
         'helper/udp-echo-helper.h',
         'helper/udp-echo-helper.h',
+        'helper/Bsync_App-helper.h',
         'helper/v4ping-helper.h',
         ]
 

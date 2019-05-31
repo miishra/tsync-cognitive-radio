@@ -129,11 +129,14 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
   Address from;
   while ((packet = socket->RecvFrom (from)))
     {
+      uint8_t *buffer = new uint8_t[packet->GetSize ()];
+      packet->CopyData(buffer, packet->GetSize ());
+      std::string s = std::string((char*)buffer);
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server received " << packet->GetSize () << " bytes from " <<
                        InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
-                       InetSocketAddress::ConvertFrom (from).GetPort ());
+                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << s);
         }
       else if (Inet6SocketAddress::IsMatchingType (from))
         {
@@ -146,6 +149,7 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       packet->RemoveAllByteTags ();
 
       NS_LOG_LOGIC ("Echoing packet");
+      socket->SetAllowBroadcast(true);
       socket->SendTo (packet, 0, from);
 
       if (InetSocketAddress::IsMatchingType (from))

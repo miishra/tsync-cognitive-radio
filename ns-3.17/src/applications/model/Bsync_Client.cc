@@ -114,6 +114,7 @@ Bsync_Client::StartApplication (void)
     {
       TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid);
+      m_socket->SetAllowBroadcast(true);
       if (Ipv4Address::IsMatchingType(m_peerAddress) == true)
         {
           m_socket->Bind();
@@ -127,8 +128,8 @@ Bsync_Client::StartApplication (void)
     }
 
   m_socket->SetRecvCallback (MakeCallback (&Bsync_Client::HandleRead, this));
-
-  ScheduleTransmit (Seconds (0.));
+  ScheduleCommands (Seconds (0.));
+  //ScheduleTransmit (Seconds (0.));
 }
 
 void
@@ -254,6 +255,27 @@ Bsync_Client::ScheduleTransmit (Time dt)
 {
   NS_LOG_FUNCTION (this << dt);
   m_sendEvent = Simulator::Schedule (dt, &Bsync_Client::Send, this);
+}
+
+void
+Bsync_Client::ScheduleCommands (Time dt)
+{
+  NS_LOG_FUNCTION (this << dt);
+  m_ControlEvent = Simulator::Schedule (Seconds (0.), &Bsync_Client::Client_Bsync_Logic, this);
+}
+
+void
+Bsync_Client::Client_Bsync_Logic (void)
+{
+  m_status=true;
+  BsyncData Bsync_data;
+  m_state = SYNCING;
+  Bsync_data.type = SYNC_PULSE_PACKET;
+  Bsync_data.s_sent_ts = Simulator::Now ().GetSeconds ();
+  uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
+  memcpy((char*) buffer, &Bsync_data, sizeof(BsyncData));
+  data = Create<Packet> (buffer, sizeof(BsyncData));
+  sendmsg(sizeof(FireflyData), data, m_socket, val);
 }
 
 void

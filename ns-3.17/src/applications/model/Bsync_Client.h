@@ -15,6 +15,51 @@ class Packet;
  *
  * Every packet sent should be returned by the server and received here.
  */
+
+enum mType
+{
+	INITIALIZATION_PACKET,
+	REFERENCE_PACKET,
+	SYNC_PULSE_PACKET,
+	SYNC_ACK_PACKET,
+	SYNC_REQUEST_PACKET,
+	SYNC_ACK_DISCONNECT_PACKET,
+	MESSAGE_TYPE_SIZE, //FINAL
+};
+
+enum nState
+{
+	INITIALISING,	
+	READY,
+	SYNCING,
+        REQUEST,
+        NEGOCI,
+};
+
+struct RefNode
+{
+	int ID_node;
+	bool status;
+	int descendant_count;
+        float value;
+	//ReferenceNode();
+        RefNode(): ID_node(0), status(true)
+	{
+	}
+
+};
+
+struct BsyncData
+{
+	mType type;	
+	int sender;
+	double s_sent_ts;
+	double r_received_ts;
+	double r_sent_ts;
+	int descendant_count;
+	
+};
+
 class Bsync_Client : public Application
 {
 public:
@@ -110,6 +155,8 @@ private:
   virtual void StopApplication (void);
 
   void ScheduleTransmit (Time dt);
+  void ScheduleCommands (Time dt);
+  void Client_Bsync_Logic(void);
   void Send (void);
 
   void HandleRead (Ptr<Socket> socket);
@@ -126,6 +173,8 @@ private:
   Address m_peerAddress;
   uint16_t m_peerPort;
   EventId m_sendEvent;
+  EventId m_ControlEvent;
+  nState m_state;
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;
 };
