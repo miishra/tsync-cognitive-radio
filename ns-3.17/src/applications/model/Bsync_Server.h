@@ -36,11 +36,16 @@ private:
   virtual void StopApplication (void);
 
   void HandleRead (Ptr<Socket> socket);
+  double f_simple( double x);
+  double f_inver( double x);
+  double increment_decrement(double x, double y);
 
   uint16_t m_port;
   Ptr<Socket> m_socket;
   Ptr<Socket> m_socket6;
   Address m_local;
+  uint32_t period;
+  double internal_timer;
 };
 
 } // namespace ns3

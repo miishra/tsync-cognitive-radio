@@ -36,6 +36,8 @@ Bsync_Server::GetTypeId (void)
 Bsync_Server::Bsync_Server ()
 {
   NS_LOG_FUNCTION (this);
+  period=1;
+  internal_timer=rand();
 }
 
 Bsync_Server::~Bsync_Server()
