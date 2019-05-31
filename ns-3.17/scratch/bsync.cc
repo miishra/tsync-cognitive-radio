@@ -122,7 +122,7 @@ int main (int argc, char *argv[])
   client.SetAttribute ("Interval", TimeValue (interPacketInterval));
   client.SetAttribute ("PacketSize", UintegerValue (packetSize));
   apps = client.Install (c.Get (0));
-  client.SetFill (apps.Get (0), "Hello World");
+  //client.SetFill (apps.Get (0), "Hello World");
   apps.Start (Seconds (2.0));
   apps.Stop (Seconds (20.0));
 

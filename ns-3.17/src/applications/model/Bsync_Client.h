@@ -3,6 +3,7 @@
 #include "ns3/ptr.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/traced-callback.h"
+#include "ns3/Bsync_Common_headers.h"
 
 namespace ns3 {
 
@@ -15,50 +16,6 @@ class Packet;
  *
  * Every packet sent should be returned by the server and received here.
  */
-
-enum mType
-{
-	INITIALIZATION_PACKET,
-	REFERENCE_PACKET,
-	SYNC_PULSE_PACKET,
-	SYNC_ACK_PACKET,
-	SYNC_REQUEST_PACKET,
-	SYNC_ACK_DISCONNECT_PACKET,
-	MESSAGE_TYPE_SIZE, //FINAL
-};
-
-enum nState
-{
-	INITIALISING,	
-	READY,
-	SYNCING,
-        REQUEST,
-        NEGOCI,
-};
-
-struct RefNode
-{
-	int ID_node;
-	bool status;
-	int descendant_count;
-        float value;
-	//ReferenceNode();
-        RefNode(): ID_node(0), status(true)
-	{
-	}
-
-};
-
-struct BsyncData
-{
-	mType type;	
-	int sender;
-	double s_sent_ts;
-	double r_received_ts;
-	double r_sent_ts;
-	int descendant_count;
-	
-};
 
 class Bsync_Client : public Application
 {
@@ -154,10 +111,10 @@ private:
   virtual void StartApplication (void);
   virtual void StopApplication (void);
 
-  void ScheduleTransmit (Time dt);
+  void ScheduleTransmit (Time dt, Ptr<Packet> data);
   void ScheduleCommands (Time dt);
   void Client_Bsync_Logic(void);
-  void Send (void);
+  void Send (Ptr<Packet> data);
 
   void HandleRead (Ptr<Socket> socket);
 
@@ -175,6 +132,9 @@ private:
   EventId m_sendEvent;
   EventId m_ControlEvent;
   nState m_state;
+  bool m_status;
+  uint32_t period;
+  double stop_time;
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;
 };

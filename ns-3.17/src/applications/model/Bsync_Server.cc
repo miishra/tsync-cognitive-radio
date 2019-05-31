@@ -131,12 +131,12 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
     {
       uint8_t *buffer = new uint8_t[packet->GetSize ()];
       packet->CopyData(buffer, packet->GetSize ());
-      std::string s = std::string((char*)buffer);
+      //std::string s = std::string((char*)buffer);
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server received " << packet->GetSize () << " bytes from " <<
                        InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
-                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << s);
+                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type);
         }
       else if (Inet6SocketAddress::IsMatchingType (from))
         {

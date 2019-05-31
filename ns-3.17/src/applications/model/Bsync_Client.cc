@@ -62,6 +62,9 @@ Bsync_Client::Bsync_Client ()
   m_sendEvent = EventId ();
   m_data = 0;
   m_dataSize = 0;
+  m_status = false;
+  period=1;
+  stop_time=20.0;
 }
 
 Bsync_Client::~Bsync_Client()
@@ -251,10 +254,10 @@ Bsync_Client::SetFill (uint8_t *fill, uint32_t fillSize, uint32_t dataSize)
 }
 
 void
-Bsync_Client::ScheduleTransmit (Time dt)
+Bsync_Client::ScheduleTransmit (Time dt, Ptr<Packet> data)
 {
   NS_LOG_FUNCTION (this << dt);
-  m_sendEvent = Simulator::Schedule (dt, &Bsync_Client::Send, this);
+  m_sendEvent = Simulator::Schedule (dt, &Bsync_Client::Send, this, data);
 }
 
 void
@@ -274,18 +277,23 @@ Bsync_Client::Client_Bsync_Logic (void)
   Bsync_data.s_sent_ts = Simulator::Now ().GetSeconds ();
   uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
   memcpy((char*) buffer, &Bsync_data, sizeof(BsyncData));
-  data = Create<Packet> (buffer, sizeof(BsyncData));
-  sendmsg(sizeof(FireflyData), data, m_socket, val);
+  Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
+  m_size = sizeof(BsyncData);
+  if (Simulator::Now ().GetSeconds () < stop_time)
+  {
+	  ScheduleTransmit (Seconds (0.), data);
+	  Simulator::Schedule (Seconds (period*1.0), &Bsync_Client::Client_Bsync_Logic, this);
+  }
 }
 
 void
-Bsync_Client::Send (void)
+Bsync_Client::Send (Ptr<Packet> data)
 {
   NS_LOG_FUNCTION (this);
 
-  NS_ASSERT (m_sendEvent.IsExpired ());
+  //NS_ASSERT (m_sendEvent.IsExpired ());
 
-  Ptr<Packet> p;
+  /*Ptr<Packet> p;
   if (m_dataSize)
     {
       //
@@ -308,11 +316,11 @@ Bsync_Client::Send (void)
       // to have a value different from the (zero) m_dataSize.
       //
       p = Create<Packet> (m_size);
-    }
+    }*/
   // call to the trace sinks before the packet is actually sent,
   // so that tags added to the packet can be sent as well
-  m_txTrace (p);
-  m_socket->Send (p);
+  m_txTrace (data);
+  m_socket->Send (data);
 
   ++m_sent;
 
@@ -329,7 +337,7 @@ Bsync_Client::Send (void)
 
   if (m_sent < m_count)
     {
-      ScheduleTransmit (m_interval);
+      ScheduleTransmit (m_interval, data);
     }
 }
 

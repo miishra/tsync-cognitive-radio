@@ -2,6 +2,7 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/address.h"
+#include "ns3/Bsync_Common_headers.h"
 
 namespace ns3 {
 
