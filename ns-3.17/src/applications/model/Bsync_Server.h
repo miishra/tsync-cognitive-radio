@@ -44,7 +44,11 @@ private:
   Ptr<Socket> m_socket;
   Ptr<Socket> m_socket6;
   Address m_local;
+  nState m_state;
+  bool m_status;
   uint32_t period;
+  uint32_t m_size;
+  double stop_time;
   double internal_timer;
 };
 

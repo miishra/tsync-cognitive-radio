@@ -11,8 +11,11 @@
 #include "ns3/socket-factory.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
+#include "ns3/core-module.h"
 
 #include "Bsync_Server.h"
+
+using namespace std;
 
 namespace ns3 {
 
@@ -37,7 +40,11 @@ Bsync_Server::Bsync_Server ()
 {
   NS_LOG_FUNCTION (this);
   period=1;
-  internal_timer=rand();
+  Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  x->SetAttribute ("Min", DoubleValue (0.0));
+  x->SetAttribute ("Max", DoubleValue (1.0));;
+  internal_timer = x->GetValue () + Simulator::Now ().GetSeconds ();
+  cout << internal_timer << endl;
 }
 
 Bsync_Server::~Bsync_Server()
@@ -105,6 +112,30 @@ Bsync_Server::StartApplication (void)
   m_socket6->SetRecvCallback (MakeCallback (&Bsync_Server::HandleRead, this));
 }
 
+double Bsync_Server::f_simple(double x)
+{
+  NS_LOG_FUNCTION (this);
+  return log(x);
+}
+
+double Bsync_Server::f_inver(double x)
+{
+  NS_LOG_FUNCTION (this);
+  return exp(x);
+}
+
+double Bsync_Server::increment_decrement(double x, double y)
+{
+  NS_LOG_FUNCTION (this);
+  double e = 0.5;
+  double var1, var2;
+
+  var1 = (f_simple(x) + e);
+  var2 = f_inver(var1);//doubt
+
+  return var2;
+}
+
 void
 Bsync_Server::StopApplication ()
 {
@@ -129,6 +160,8 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 
   Ptr<Packet> packet;
   Address from;
+  BsyncData Bsync_data;
+  Bsync_data.r_received_ts = Simulator::Now ().GetSeconds ();
   while ((packet = socket->RecvFrom (from)))
     {
       uint8_t *buffer = new uint8_t[packet->GetSize ()];
@@ -144,25 +177,33 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server received " << packet->GetSize () << " bytes from " <<
                        Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
-                       Inet6SocketAddress::ConvertFrom (from).GetPort ());
+                       Inet6SocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type);
         }
 
       packet->RemoveAllPacketTags ();
       packet->RemoveAllByteTags ();
 
-      NS_LOG_LOGIC ("Echoing packet");
+      NS_LOG_LOGIC ("Sending the reply packet");
       socket->SetAllowBroadcast(true);
-      socket->SendTo (packet, 0, from);
+      m_status=true;
+      m_state = READY;
+      Bsync_data.type = SYNC_ACK_PACKET;
+      Bsync_data.r_sent_ts = Simulator::Now ().GetSeconds ();
+      uint8_t *repbuffer = new uint8_t[sizeof(BsyncData)];
+      memcpy((char*) repbuffer, &Bsync_data, sizeof(BsyncData));
+      Ptr<Packet> data = Create<Packet> (repbuffer, sizeof(BsyncData));
+      m_size = sizeof(BsyncData);
+      socket->SendTo (data, 0, from);//packet
 
       if (InetSocketAddress::IsMatchingType (from))
         {
-          NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << packet->GetSize () << " bytes to " <<
+          NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << data->GetSize () << " bytes to " <<
                        InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
                        InetSocketAddress::ConvertFrom (from).GetPort ());
         }
       else if (Inet6SocketAddress::IsMatchingType (from))
         {
-          NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << packet->GetSize () << " bytes to " <<
+          NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << data->GetSize () << " bytes to " <<
                        Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
                        Inet6SocketAddress::ConvertFrom (from).GetPort ());
         }

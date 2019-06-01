@@ -321,18 +321,20 @@ Bsync_Client::Send (Ptr<Packet> data)
   // so that tags added to the packet can be sent as well
   m_txTrace (data);
   m_socket->Send (data);
+  uint8_t *buffer = new uint8_t[data->GetSize ()];
+  data->CopyData(buffer, data->GetSize ());
 
   ++m_sent;
 
   if (Ipv4Address::IsMatchingType (m_peerAddress))
     {
       NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client sent " << m_size << " bytes to " <<
-                   Ipv4Address::ConvertFrom (m_peerAddress) << " port " << m_peerPort);
+                   Ipv4Address::ConvertFrom (m_peerAddress) << " port " << m_peerPort << " with content " << ((BsyncData*) buffer)->type);
     }
   else if (Ipv6Address::IsMatchingType (m_peerAddress))
     {
       NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client sent " << m_size << " bytes to " <<
-                   Ipv6Address::ConvertFrom (m_peerAddress) << " port " << m_peerPort);
+                   Ipv6Address::ConvertFrom (m_peerAddress) << " port " << m_peerPort << " with content " << ((BsyncData*) buffer)->type);
     }
 
   if (m_sent < m_count)
@@ -349,17 +351,19 @@ Bsync_Client::HandleRead (Ptr<Socket> socket)
   Address from;
   while ((packet = socket->RecvFrom (from)))
     {
+	  uint8_t *buffer = new uint8_t[packet->GetSize ()];
+	  packet->CopyData(buffer, packet->GetSize ());
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client received " << packet->GetSize () << " bytes from " <<
                        InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
-                       InetSocketAddress::ConvertFrom (from).GetPort ());
+                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type);
         }
       else if (Inet6SocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client received " << packet->GetSize () << " bytes from " <<
                        Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
-                       Inet6SocketAddress::ConvertFrom (from).GetPort ());
+                       Inet6SocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type);
         }
     }
 }
