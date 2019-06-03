@@ -270,6 +270,7 @@ Bsync_Client::ScheduleCommands (Time dt)
 void
 Bsync_Client::Client_Bsync_Logic (void)
 {
+  internal_timer =0;
   m_status=true;
   BsyncData Bsync_data;
   m_state = SYNCING;

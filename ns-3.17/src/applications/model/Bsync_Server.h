@@ -39,8 +39,10 @@ private:
   double f_simple( double x);
   double f_inver( double x);
   double increment_decrement(double x, double y);
+  void reachedT();
 
   uint16_t m_port;
+  int m_period_count;
   Ptr<Socket> m_socket;
   Ptr<Socket> m_socket6;
   Address m_local;

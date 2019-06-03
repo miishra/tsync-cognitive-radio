@@ -44,6 +44,7 @@ Bsync_Server::Bsync_Server ()
   x->SetAttribute ("Min", DoubleValue (0.0));
   x->SetAttribute ("Max", DoubleValue (1.0));;
   internal_timer = x->GetValue () + Simulator::Now ().GetSeconds ();
+  m_period_count=1;
   cout << internal_timer << endl;
 }
 
@@ -136,6 +137,17 @@ double Bsync_Server::increment_decrement(double x, double y)
   return var2;
 }
 
+void Bsync_Server::reachedT()
+{
+  NS_LOG_FUNCTION (this);
+  internal_timer=0;
+  Time next_schedule=Seconds(period);
+  for(int i=0;i<m_period_count;i++)
+	  next_schedule+=next_schedule;
+  m_period_count+=1;
+  Simulator::Schedule (next_schedule, &Bsync_Server::reachedT, this);
+}
+
 void
 Bsync_Server::StopApplication ()
 {
@@ -182,6 +194,9 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 
       packet->RemoveAllPacketTags ();
       packet->RemoveAllByteTags ();
+
+      internal_timer = internal_timer + increment_decrement(((BsyncData*) buffer)->s_sent_ts, 0);
+      Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
 
       NS_LOG_LOGIC ("Sending the reply packet");
       socket->SetAllowBroadcast(true);
