@@ -23,6 +23,7 @@ Bsync_ServerHelper::SetAttribute (
 ApplicationContainer
 Bsync_ServerHelper::Install (Ptr<Node> node) const
 {
+  //SetAttribute ("Node ID", UintegerValue (node->GetId()));
   return ApplicationContainer (InstallPriv (node));
 }
 

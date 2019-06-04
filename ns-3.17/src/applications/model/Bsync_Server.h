@@ -43,6 +43,7 @@ private:
 
   uint16_t m_port;
   int m_period_count;
+  int ref_node_id;
   Ptr<Socket> m_socket;
   Ptr<Socket> m_socket6;
   Address m_local;
@@ -50,6 +51,7 @@ private:
   bool m_status;
   uint32_t period;
   uint32_t m_size;
+  uint32_t m_node_id;
   double stop_time;
   double internal_timer;
 };

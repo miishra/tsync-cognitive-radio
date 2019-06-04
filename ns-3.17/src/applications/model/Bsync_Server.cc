@@ -32,6 +32,10 @@ Bsync_Server::GetTypeId (void)
                    UintegerValue (9),
                    MakeUintegerAccessor (&Bsync_Server::m_port),
                    MakeUintegerChecker<uint16_t> ())
+   /*.AddAttribute ("Node ID", "ID of node on which this sever application is installed.",
+					  UintegerValue (1000),
+					  MakeUintegerAccessor (&Bsync_Server::m_node_id),
+					  MakeUintegerChecker<uint32_t> ())*/
   ;
   return tid;
 }
@@ -45,6 +49,7 @@ Bsync_Server::Bsync_Server ()
   x->SetAttribute ("Max", DoubleValue (1.0));;
   internal_timer = x->GetValue () + Simulator::Now ().GetSeconds ();
   m_period_count=1;
+  ref_node_id=-1;
   cout << internal_timer << endl;
 }
 
@@ -195,6 +200,11 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       packet->RemoveAllPacketTags ();
       packet->RemoveAllByteTags ();
 
+      if (ref_node_id==-1 && ((BsyncData*) buffer)->type==2)
+      {
+    	  ref_node_id=((BsyncData*) buffer)->sender;
+      	  NS_LOG_INFO("At time " << Simulator::Now ().GetSeconds () << "sever with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node");
+      }
       internal_timer = internal_timer + increment_decrement(((BsyncData*) buffer)->s_sent_ts, 0);
       Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
 
@@ -202,6 +212,7 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       socket->SetAllowBroadcast(true);
       m_status=true;
       m_state = READY;
+      Bsync_data.sender=this->GetNode()->GetId();
       Bsync_data.type = SYNC_ACK_PACKET;
       Bsync_data.r_sent_ts = Simulator::Now ().GetSeconds ();
       uint8_t *repbuffer = new uint8_t[sizeof(BsyncData)];

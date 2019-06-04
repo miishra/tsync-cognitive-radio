@@ -274,6 +274,7 @@ Bsync_Client::Client_Bsync_Logic (void)
   m_status=true;
   BsyncData Bsync_data;
   m_state = SYNCING;
+  Bsync_data.sender=this->GetNode()->GetId();
   Bsync_data.type = SYNC_PULSE_PACKET;
   Bsync_data.s_sent_ts = Simulator::Now ().GetSeconds ();
   uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
