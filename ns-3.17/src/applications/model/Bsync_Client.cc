@@ -58,6 +58,7 @@ Bsync_Client::Bsync_Client ()
 {
   NS_LOG_FUNCTION (this);
   m_sent = 0;
+  m_received=0;
   m_socket = 0;
   m_sendEvent = EventId ();
   m_data = 0;
@@ -139,6 +140,8 @@ void
 Bsync_Client::StopApplication ()
 {
   NS_LOG_FUNCTION (this);
+  NS_LOG_INFO("Client with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");
+  NS_LOG_INFO("Client with node ID: " << this->GetNode()->GetId() << "had final Timestamp: " << Simulator::Now ().GetSeconds ()-1);
 
   if (m_socket != 0)
     {
@@ -271,6 +274,7 @@ void
 Bsync_Client::Client_Bsync_Logic (void)
 {
   internal_timer =0;
+  ++m_sent;
   m_status=true;
   BsyncData Bsync_data;
   m_state = SYNCING;
@@ -353,19 +357,20 @@ Bsync_Client::HandleRead (Ptr<Socket> socket)
   Address from;
   while ((packet = socket->RecvFrom (from)))
     {
+	  ++m_received;
 	  uint8_t *buffer = new uint8_t[packet->GetSize ()];
 	  packet->CopyData(buffer, packet->GetSize ());
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client received " << packet->GetSize () << " bytes from " <<
                        InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
-                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
+                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->r_sent_ts);
         }
       else if (Inet6SocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client received " << packet->GetSize () << " bytes from " <<
                        Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
-                       Inet6SocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
+                       Inet6SocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->r_sent_ts);
         }
     }
 }

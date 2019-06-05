@@ -40,8 +40,11 @@ private:
   double f_inver( double x);
   double increment_decrement(double x, double y);
   void reachedT();
+  void transmitasONF(Ptr<Socket> socket);
 
   uint16_t m_port;
+  uint32_t m_sent;
+  uint32_t m_received;
   int m_period_count;
   int ref_node_id;
   Ptr<Socket> m_socket;

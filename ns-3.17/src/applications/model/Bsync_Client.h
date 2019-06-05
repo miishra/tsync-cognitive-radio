@@ -126,6 +126,7 @@ private:
   uint8_t *m_data;
 
   uint32_t m_sent;
+  uint32_t m_received;
   Ptr<Socket> m_socket;
   Address m_peerAddress;
   uint16_t m_peerPort;

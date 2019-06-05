@@ -51,6 +51,9 @@ Bsync_Server::Bsync_Server ()
   timestamp= x->GetValue();
   m_period_count=1;
   ref_node_id=-1;
+  stop_time=20.0;
+  m_sent=0;
+  m_received=0;
   cout << internal_timer << endl;
 }
 
@@ -152,13 +155,45 @@ void Bsync_Server::reachedT()
   for(int i=0;i<m_period_count;i++)
 	  next_schedule+=next_schedule;
   m_period_count+=1;
-  Simulator::Schedule (next_schedule, &Bsync_Server::reachedT, this);
+  if (Simulator::Now ().GetSeconds () < stop_time)
+	  Simulator::Schedule (next_schedule, &Bsync_Server::reachedT, this);
+}
+
+void Bsync_Server::transmitasONF(Ptr<Socket> socket)
+{
+  NS_LOG_FUNCTION (this);
+  internal_timer =0;
+  BsyncData Bsync_data;
+  m_state = SYNCING;
+  Bsync_data.sender=this->GetNode()->GetId();
+  Bsync_data.type = SYNC_PULSE_PACKET;
+  Bsync_data.s_sent_ts = timestamp;
+  uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
+  memcpy((char*) buffer, &Bsync_data, sizeof(BsyncData));
+  Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
+  m_size = sizeof(BsyncData);
+
+  Time next_schedule=Seconds(period+0.000001);
+  for(int i=0;i<m_period_count;i++)
+  	  next_schedule+=next_schedule;
+  //m_period_count+=1;
+
+  if (Simulator::Now ().GetSeconds () < stop_time)
+  {
+	  socket->SendTo (data, 0, Ipv4Address ("255.255.255.255"));
+	  ++m_sent;
+	  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
+			  Ipv4Address ("255.255.255.255") << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
+      Simulator::Schedule (next_schedule, &Bsync_Server::transmitasONF, this, socket);
+  }
 }
 
 void
 Bsync_Server::StopApplication ()
 {
   NS_LOG_FUNCTION (this);
+  NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");
+  NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "had final Timestamp: " << timestamp);
 
   if (m_socket != 0)
     {
@@ -183,6 +218,7 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
   Bsync_data.r_received_ts = Simulator::Now ().GetSeconds ();
   while ((packet = socket->RecvFrom (from)))
     {
+	  ++m_received;
       uint8_t *buffer = new uint8_t[packet->GetSize ()];
       packet->CopyData(buffer, packet->GetSize ());
       //std::string s = std::string((char*)buffer);
@@ -208,37 +244,43 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       	  NS_LOG_INFO("At time " << Simulator::Now ().GetSeconds () << " server with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node");
       }
 
-      if (ref_node_id==-1 && ((BsyncData*) buffer)->type==2)
+      if ((ref_node_id==-1 || ref_node_id==((BsyncData*) buffer)->sender) && ((BsyncData*) buffer)->type==2)
       {
 	      internal_timer = min(internal_timer + increment_decrement(internal_timer, 0), 1.0);
-              timestamp = ((BsyncData*) buffer)->s_sent_ts;
-	      //Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
-      }
-      NS_LOG_LOGIC ("Sending the reply packet");
-      socket->SetAllowBroadcast(true);
-      m_status=true;
-      m_state = READY;
-      Bsync_data.sender=this->GetNode()->GetId();
-      Bsync_data.type = SYNC_ACK_PACKET;
-      Bsync_data.r_sent_ts = Simulator::Now ().GetSeconds ();
-      uint8_t *repbuffer = new uint8_t[sizeof(BsyncData)];
-      memcpy((char*) repbuffer, &Bsync_data, sizeof(BsyncData));
-      Ptr<Packet> data = Create<Packet> (repbuffer, sizeof(BsyncData));
-      m_size = sizeof(BsyncData);
-      socket->SendTo (data, 0, from);//packet
+          timestamp = ((BsyncData*) buffer)->s_sent_ts;
 
-      if (InetSocketAddress::IsMatchingType (from))
-        {
-          NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << data->GetSize () << " bytes to " <<
-                       InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
-                       InetSocketAddress::ConvertFrom (from).GetPort ());
-        }
-      else if (Inet6SocketAddress::IsMatchingType (from))
-        {
-          NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << data->GetSize () << " bytes to " <<
-                       Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
-                       Inet6SocketAddress::ConvertFrom (from).GetPort ());
-        }
+          NS_LOG_LOGIC ("Sending the reply packet");
+		  socket->SetAllowBroadcast(true);
+		  m_status=true;
+		  m_state = READY;
+		  Bsync_data.sender=this->GetNode()->GetId();
+		  Bsync_data.type = SYNC_ACK_PACKET;
+		  Bsync_data.r_sent_ts = Simulator::Now ().GetSeconds ();
+		  uint8_t *repbuffer = new uint8_t[sizeof(BsyncData)];
+		  memcpy((char*) repbuffer, &Bsync_data, sizeof(BsyncData));
+		  Ptr<Packet> data = Create<Packet> (repbuffer, sizeof(BsyncData));
+		  m_size = sizeof(BsyncData);
+		  socket->SendTo (data, 0, from);//packet
+		  ++m_sent;
+
+		  if (InetSocketAddress::IsMatchingType (from))
+		    {
+			  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << data->GetSize () << " bytes to " <<
+						 InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
+						 InetSocketAddress::ConvertFrom (from).GetPort ());
+		    }
+		  else if (Inet6SocketAddress::IsMatchingType (from))
+		    {
+			  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server sent " << data->GetSize () << " bytes to " <<
+						 Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
+						 Inet6SocketAddress::ConvertFrom (from).GetPort ());
+		    }
+	        Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
+      }
+      if (ref_node_id>=0)
+      {
+    	  Simulator::Schedule (Seconds (period*1.0+0.00001), &Bsync_Server::transmitasONF, this, socket);
+      }
     }
 }
 
