@@ -48,6 +48,7 @@ Bsync_Server::Bsync_Server ()
   x->SetAttribute ("Min", DoubleValue (0.0));
   x->SetAttribute ("Max", DoubleValue (1.0));;
   internal_timer = x->GetValue () + Simulator::Now ().GetSeconds ();
+  timestamp= x->GetValue();
   m_period_count=1;
   ref_node_id=-1;
   cout << internal_timer << endl;
@@ -133,13 +134,14 @@ double Bsync_Server::f_inver(double x)
 double Bsync_Server::increment_decrement(double x, double y)
 {
   NS_LOG_FUNCTION (this);
-  double e = 0.5;
+  /*double e = 0.5;
   double var1, var2;
 
   var1 = (f_simple(x) + e);
-  var2 = f_inver(var1);//doubt
+  var2 = f_inver(var1);//doubt8*/
+  double epsilon = 0.1;
 
-  return var2;
+  return x+epsilon;
 }
 
 void Bsync_Server::reachedT()
@@ -188,13 +190,13 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server received " << packet->GetSize () << " bytes from " <<
                        InetSocketAddress::ConvertFrom (from).GetIpv4 () << " port " <<
-                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type);
+                       InetSocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
         }
       else if (Inet6SocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server received " << packet->GetSize () << " bytes from " <<
                        Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
-                       Inet6SocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type);
+                       Inet6SocketAddress::ConvertFrom (from).GetPort () << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
         }
 
       packet->RemoveAllPacketTags ();
@@ -203,11 +205,15 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       if (ref_node_id==-1 && ((BsyncData*) buffer)->type==2)
       {
     	  ref_node_id=((BsyncData*) buffer)->sender;
-      	  NS_LOG_INFO("At time " << Simulator::Now ().GetSeconds () << "sever with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node");
+      	  NS_LOG_INFO("At time " << Simulator::Now ().GetSeconds () << " server with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node");
       }
-      internal_timer = internal_timer + increment_decrement(((BsyncData*) buffer)->s_sent_ts, 0);
-      Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
 
+      if (ref_node_id==-1 && ((BsyncData*) buffer)->type==2)
+      {
+	      internal_timer = min(internal_timer + increment_decrement(internal_timer, 0), 1.0);
+              timestamp = ((BsyncData*) buffer)->s_sent_ts;
+	      //Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
+      }
       NS_LOG_LOGIC ("Sending the reply packet");
       socket->SetAllowBroadcast(true);
       m_status=true;

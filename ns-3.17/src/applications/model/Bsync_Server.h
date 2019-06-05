@@ -54,6 +54,7 @@ private:
   uint32_t m_node_id;
   double stop_time;
   double internal_timer;
+  double timestamp;
 };
 
 } // namespace ns3
