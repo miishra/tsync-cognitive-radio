@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
   wifiMac.SetType ("ns3::AdhocWifiMac");
 
   // Position our nodes with 110 m in between
-  MobilityHelper mobility;
+  /*MobilityHelper mobility;
   Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
   double start = 110.0;
   for (int i=0; i<nNodes; i++) {
@@ -75,7 +75,20 @@ int main (int argc, char *argv[])
     start = start+10;//20
   }
   mobility.SetPositionAllocator (positionAlloc);
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");*/
+
+  MobilityHelper mobility;
+  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
+                                      "X", StringValue ("0.0"),
+                                      "Y", StringValue ("0.0"),
+                                      "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=50]"));
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+
+  /*mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
+		  "GridWidth", StringValue ("50.0"),
+		  "MinX", StringValue ("0.0"), "MinY", StringValue ("0.0"), "DeltaX", StringValue ("10.0"),
+		  "DeltaY", StringValue ("10.0"));
+  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");*/
 
   // Read PU file
   Ptr<PUModel> puModel = CreateObject<PUModel>();
@@ -106,13 +119,17 @@ int main (int argc, char *argv[])
 
   uint16_t port = 9;  // well-known echo port number
   Bsync_ServerHelper server (port);
-  ApplicationContainer apps = server.Install (c.Get (c.GetN()-1));
-  apps.Start (Seconds (1.0));
-  apps.Stop (Seconds (20.0));
+  ApplicationContainer apps;
+  for(int i=1;i<c.GetN();i++)
+  {
+	  apps = server.Install (c.Get (i));
+	  apps.Start (Seconds (1.0));
+	  apps.Stop (Seconds (20.0));
+  }
 
-  apps = server.Install (c.Get (c.GetN()-2));
+  /*apps = server.Install (c.Get (c.GetN()-2));
   apps.Start (Seconds (1.0));
-  apps.Stop (Seconds (20.0));
+  apps.Stop (Seconds (20.0));*/
 
   uint32_t packetSize = 1024;
   uint32_t maxPacketCount = 2;
