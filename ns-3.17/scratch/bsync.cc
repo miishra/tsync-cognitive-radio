@@ -23,6 +23,7 @@ int main (int argc, char *argv[])
   SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
   int nNodes = 3;
+  double simulation_duration=50.0;
 
   CommandLine cmd;
 
@@ -124,7 +125,7 @@ int main (int argc, char *argv[])
   {
 	  apps = server.Install (c.Get (i));
 	  apps.Start (Seconds (1.0));
-	  apps.Stop (Seconds (20.0));
+	  apps.Stop (Seconds (simulation_duration));
   }
 
   /*apps = server.Install (c.Get (c.GetN()-2));
@@ -141,12 +142,12 @@ int main (int argc, char *argv[])
   apps = client.Install (c.Get (0));
   //client.SetFill (apps.Get (0), "Hello World");
   apps.Start (Seconds (2.0));
-  apps.Stop (Seconds (20.0));
+  apps.Stop (Seconds (simulation_duration));
 
   // Output what we are doing
   NS_LOG_UNCOND ("Starting CR test");
 
-  Simulator::Stop (Seconds (21.0));
+  Simulator::Stop (Seconds (simulation_duration+1.0));
   Simulator::Run ();
   Simulator::Destroy ();
 

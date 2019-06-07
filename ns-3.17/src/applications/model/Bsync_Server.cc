@@ -51,9 +51,10 @@ Bsync_Server::Bsync_Server ()
   timestamp= x->GetValue();
   m_period_count=1;
   ref_node_id=-1;
-  stop_time=20.0;
+  stop_time=50.0;
   m_sent=0;
   m_received=0;
+  ref_flag=0;
   cout << internal_timer << endl;
 }
 
@@ -151,12 +152,8 @@ void Bsync_Server::reachedT()
 {
   NS_LOG_FUNCTION (this);
   internal_timer=0;
-  Time next_schedule=Seconds(period);
-  for(int i=0;i<m_period_count;i++)
-	  next_schedule+=next_schedule;
-  m_period_count+=1;
-  if (Simulator::Now ().GetSeconds () < stop_time)
-	  Simulator::Schedule (next_schedule, &Bsync_Server::reachedT, this);
+  if (Simulator::Now ().GetSeconds () < stop_time && ref_flag==0)
+	  Simulator::Schedule (Seconds(period), &Bsync_Server::reachedT, this);
 }
 
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)
@@ -173,10 +170,11 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
   Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
   m_size = sizeof(BsyncData);
 
-  Time next_schedule=Seconds(period+0.000001);
+  /*Time next_schedule=Seconds(period);//0.000001
   for(int i=0;i<m_period_count;i++)
   	  next_schedule+=next_schedule;
-  //m_period_count+=1;
+  m_period_count+=1;
+  NS_LOG_INFO(m_period_count);*/
 
   if (Simulator::Now ().GetSeconds () < stop_time)
   {
@@ -184,7 +182,7 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 	  ++m_sent;
 	  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
 			  Ipv4Address ("255.255.255.255") << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
-      Simulator::Schedule (next_schedule, &Bsync_Server::transmitasONF, this, socket);
+      Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);
   }
 }
 
@@ -275,12 +273,15 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 						 Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << " port " <<
 						 Inet6SocketAddress::ConvertFrom (from).GetPort ());
 		    }
-	        Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
+	        //Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
       }
-      if (ref_node_id>=0)
+      if (ref_node_id>=0 && ref_flag==0)
       {
-    	  Simulator::Schedule (Seconds (period*1.0+0.00001), &Bsync_Server::transmitasONF, this, socket);
+	  ref_flag=1;
+    	  Simulator::Schedule (Seconds (0.0), &Bsync_Server::transmitasONF, this, socket);//period*1.0
       }
+      if (ref_flag==0)
+          Simulator::Schedule (Seconds (0.0), &Bsync_Server::reachedT, this);
     }
 }
 

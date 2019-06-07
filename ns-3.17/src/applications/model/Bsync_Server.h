@@ -58,6 +58,7 @@ private:
   double stop_time;
   double internal_timer;
   double timestamp;
+  int ref_flag;
 };
 
 } // namespace ns3
