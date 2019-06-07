@@ -65,7 +65,7 @@ Bsync_Client::Bsync_Client ()
   m_dataSize = 0;
   m_status = false;
   period=1;
-  stop_time=50.0;
+  stop_time=20.0;
 }
 
 Bsync_Client::~Bsync_Client()

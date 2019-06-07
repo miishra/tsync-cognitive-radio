@@ -51,7 +51,8 @@ Bsync_Server::Bsync_Server ()
   timestamp= x->GetValue();
   m_period_count=1;
   ref_node_id=-1;
-  stop_time=50.0;
+  stop_time=20.0;
+  last_internal_timer_update=0;
   m_sent=0;
   m_received=0;
   ref_flag=0;

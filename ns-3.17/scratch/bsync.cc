@@ -23,7 +23,7 @@ int main (int argc, char *argv[])
   SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
   int nNodes = 3;
-  double simulation_duration=50.0;
+  double simulation_duration=20.0;
 
   CommandLine cmd;
 

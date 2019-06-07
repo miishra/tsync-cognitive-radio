@@ -57,6 +57,7 @@ private:
   uint32_t m_node_id;
   double stop_time;
   double internal_timer;
+  double last_internal_timer_update;
   double timestamp;
   int ref_flag;
 };
