@@ -228,6 +228,7 @@ SpectrumManager::SenseEnded() {
 #ifdef SENSING_VERBOSE_MODE
 			char buffer [50];
 			std::sprintf(buffer, "[SENSING-DBG] Node %d starts transmitting on channel %d",m_nodeId,current_channel);
+                        NS_LOG_UNCOND("Node: " << m_nodeId << " used Channel: " << current_channel << " for SYN messages");
 			NS_LOG_DEBUG (buffer);
 #endif
 		}

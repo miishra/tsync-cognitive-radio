@@ -65,6 +65,7 @@ Bsync_Client::Bsync_Client ()
   m_dataSize = 0;
   m_status = false;
   period=1;
+  m_period_count=1;
   stop_time=20.0;
 }
 
@@ -331,6 +332,10 @@ Bsync_Client::Send (Ptr<Packet> data)
   data->CopyData(buffer, data->GetSize ());
 
   ++m_sent;
+
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  NS_LOG_UNCOND("Round: " << m_period_count << " of Master Node with Node ID: " << this->GetNode()->GetId() << " Current TimeStamp Value: " << (double)((BsyncData*) buffer)->s_sent_ts);
+  m_period_count+=1;
 
   if (Ipv4Address::IsMatchingType (m_peerAddress))
     {

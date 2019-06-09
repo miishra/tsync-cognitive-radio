@@ -23,6 +23,9 @@ int main (int argc, char *argv[])
   SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
   int nNodes = 3;
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  NS_LOG_UNCOND("Number of Nodes in the Scenario: " << nNodes << "\n\n");
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   double simulation_duration=20.0;
 
   CommandLine cmd;
@@ -117,6 +120,11 @@ int main (int argc, char *argv[])
   ipv4.SetBase ("10.1.1.0", "255.255.255.0");
   // IP addresses are only assigned for control devices
   Ipv4InterfaceContainer i = ipv4.Assign (devices_control);
+
+  NS_LOG_UNCOND("Initially: \n");
+  NS_LOG_UNCOND("Number of Master Nodes: " << nNodes-nNodes+1);
+  NS_LOG_UNCOND("Number of Ordinary Nodes: " << c.GetN()-1);
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
   uint16_t port = 9;  // well-known echo port number
   Bsync_ServerHelper server (port);

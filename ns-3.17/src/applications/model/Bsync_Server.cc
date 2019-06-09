@@ -56,7 +56,7 @@ Bsync_Server::Bsync_Server ()
   m_sent=0;
   m_received=0;
   ref_flag=0;
-  cout << internal_timer << endl;
+  //cout << internal_timer << endl;
 }
 
 Bsync_Server::~Bsync_Server()
@@ -122,6 +122,8 @@ Bsync_Server::StartApplication (void)
 
   m_socket->SetRecvCallback (MakeCallback (&Bsync_Server::HandleRead, this));
   m_socket6->SetRecvCallback (MakeCallback (&Bsync_Server::HandleRead, this));
+  NS_LOG_UNCOND("The value of initial Timestamp of Ordinary Node with ID: " << this->GetNode()->GetId() << " is " << internal_timer);
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 }
 
 double Bsync_Server::f_simple(double x)
@@ -204,6 +206,7 @@ Bsync_Server::StopApplication ()
       m_socket6->Close ();
       m_socket6->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     }
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 }
 
 void
@@ -241,12 +244,17 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       {
     	  ref_node_id=((BsyncData*) buffer)->sender;
       	  NS_LOG_INFO("At time " << Simulator::Now ().GetSeconds () << " server with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node");
+          NS_LOG_UNCOND("At time " << Simulator::Now ().GetSeconds () << " Ordinary Node with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node and became ONREF");
+          NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
       }
 
       if ((ref_node_id==-1 || ref_node_id==((BsyncData*) buffer)->sender) && ((BsyncData*) buffer)->type==2)
       {
 	      internal_timer = min(internal_timer + increment_decrement(internal_timer, 0), 1.0);
           timestamp = ((BsyncData*) buffer)->s_sent_ts;
+          NS_LOG_UNCOND("Round: " << m_period_count << " of ON with Node ID: " << this->GetNode()->GetId() << " Current TimeStamp Value: " << timestamp);
+          //NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+          m_period_count+=1;
 
           NS_LOG_LOGIC ("Sending the reply packet");
 		  socket->SetAllowBroadcast(true);

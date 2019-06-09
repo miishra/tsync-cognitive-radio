@@ -137,6 +137,7 @@ private:
   uint32_t period;
   double stop_time;
   double internal_timer;
+  int m_period_count;
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;
 };
