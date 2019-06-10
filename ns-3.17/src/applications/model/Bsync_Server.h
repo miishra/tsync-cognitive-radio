@@ -39,7 +39,7 @@ private:
   double f_simple( double x);
   double f_inver( double x);
   double increment_decrement(double x, double y);
-  void reachedT();
+  void reachedT(Ptr<Socket> socket);
   void transmitasONF(Ptr<Socket> socket);
 
   uint16_t m_port;

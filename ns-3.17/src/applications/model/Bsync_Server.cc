@@ -151,18 +151,20 @@ double Bsync_Server::increment_decrement(double x, double y)
   return x+epsilon;
 }
 
-void Bsync_Server::reachedT()
+void Bsync_Server::reachedT(Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION (this);
-  internal_timer=0;
-  if (Simulator::Now ().GetSeconds () < stop_time && ref_flag==0)
-	  Simulator::Schedule (Seconds(period), &Bsync_Server::reachedT, this);
+  //internal_timer=0;
+  if (ref_node_id>=0)
+      transmitasONF(socket);
+  if (Simulator::Now ().GetSeconds () < stop_time)
+	  Simulator::Schedule (Seconds(period), &Bsync_Server::reachedT, this, socket);//period
 }
 
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION (this);
-  internal_timer =0;
+  //internal_timer =0;
   BsyncData Bsync_data;
   m_state = SYNCING;
   Bsync_data.sender=this->GetNode()->GetId();
@@ -185,7 +187,7 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 	  ++m_sent;
 	  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
 			  Ipv4Address ("255.255.255.255") << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
-      Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);
+      //Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);//period+0.0000001
   }
 }
 
@@ -250,7 +252,8 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 
       if ((ref_node_id==-1 || ref_node_id==((BsyncData*) buffer)->sender) && ((BsyncData*) buffer)->type==2)
       {
-	      internal_timer = min(internal_timer + increment_decrement(internal_timer, 0), 1.0);
+	  internal_timer = min(increment_decrement(internal_timer, 0), 1.0);
+	  NS_LOG_INFO("Current value of internal timer is: " << internal_timer);
           timestamp = ((BsyncData*) buffer)->s_sent_ts;
           NS_LOG_UNCOND("Round: " << m_period_count << " of ON with Node ID: " << this->GetNode()->GetId() << " Current TimeStamp Value: " << timestamp);
           //NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
@@ -287,10 +290,10 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       if (ref_node_id>=0 && ref_flag==0)
       {
 	  ref_flag=1;
-    	  Simulator::Schedule (Seconds (0.0), &Bsync_Server::transmitasONF, this, socket);//period*1.0
+    	  Simulator::Schedule (Seconds (0.0), &Bsync_Server::reachedT, this, socket);//period*1.0
       }
-      if (ref_flag==0)
-          Simulator::Schedule (Seconds (0.0), &Bsync_Server::reachedT, this);
+      //if (ref_flag==0)
+          //Simulator::Schedule (Seconds (0.0), &Bsync_Server::reachedT, this);
     }
 }
 
