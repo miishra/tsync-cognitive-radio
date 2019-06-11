@@ -58,8 +58,10 @@ private:
   double stop_time;
   double internal_timer;
   double last_internal_timer_update;
+  double last_internal_timer_val;
   double timestamp;
   int ref_flag;
+  EventId m_event;
 };
 
 } // namespace ns3

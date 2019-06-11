@@ -52,6 +52,7 @@ Bsync_Server::Bsync_Server ()
   m_period_count=1;
   ref_node_id=-1;
   stop_time=20.0;
+  last_internal_timer_val=0;
   last_internal_timer_update=0;
   m_sent=0;
   m_received=0;
@@ -157,8 +158,11 @@ void Bsync_Server::reachedT(Ptr<Socket> socket)
   //internal_timer=0;
   if (ref_node_id>=0)
       transmitasONF(socket);
+  internal_timer=0;
+  last_internal_timer_update = Simulator::Now ().GetSeconds ();
+  //last_internal_timer_val=internal_timer;
   if (Simulator::Now ().GetSeconds () < stop_time)
-	  Simulator::Schedule (Seconds(period), &Bsync_Server::reachedT, this, socket);//period
+	  m_event=Simulator::Schedule (Seconds(period), &Bsync_Server::reachedT, this, socket);//period
 }
 
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)
@@ -252,8 +256,21 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 
       if ((ref_node_id==-1 || ref_node_id==((BsyncData*) buffer)->sender) && ((BsyncData*) buffer)->type==2)
       {
-	  internal_timer = min(increment_decrement(internal_timer, 0), 1.0);
-	  NS_LOG_INFO("Current value of internal timer is: " << internal_timer);
+    	  last_internal_timer_val=internal_timer;
+		  internal_timer = min(increment_decrement(internal_timer, 0), 1.0);
+		  if (last_internal_timer_update==0)
+		  {
+			  m_event=Simulator::Schedule (Seconds (period-internal_timer), &Bsync_Server::reachedT, this, socket);//period*0.0
+			  last_internal_timer_update = Simulator::Now ().GetSeconds ();
+		  }
+		  else if (Simulator::Now ().GetSeconds () - last_internal_timer_update > period-last_internal_timer_val)
+		  {
+			  Simulator::Cancel(m_event);
+			  m_event=Simulator::Schedule (Seconds (period-internal_timer), &Bsync_Server::reachedT, this, socket);//period*0.0
+			  last_internal_timer_update = Simulator::Now ().GetSeconds ();
+		  }
+		  NS_LOG_INFO("Current value of internal timer is: " << internal_timer);
+
           timestamp = ((BsyncData*) buffer)->s_sent_ts;
           NS_LOG_UNCOND("Round: " << m_period_count << " of ON with Node ID: " << this->GetNode()->GetId() << " Current TimeStamp Value: " << timestamp);
           //NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
@@ -287,11 +304,11 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 		    }
 	        //Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::reachedT, this);
       }
-      if (ref_node_id>=0 && ref_flag==0)
+      /*if (ref_node_id>=0 && ref_flag==0)
       {
 	  ref_flag=1;
     	  Simulator::Schedule (Seconds (0.0), &Bsync_Server::reachedT, this, socket);//period*1.0
-      }
+      }*/
       //if (ref_flag==0)
           //Simulator::Schedule (Seconds (0.0), &Bsync_Server::reachedT, this);
     }
