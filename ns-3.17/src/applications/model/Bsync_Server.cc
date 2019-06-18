@@ -22,6 +22,32 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("Bsync_ServerApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Server);
 
+Conflict_G_Loc::Conflict_G_Loc ()
+{
+  NS_LOG_FUNCTION (this);
+  no_su=0;
+  no_pu=0;
+  current_depth=0;
+  array_link_co=0;
+  array_link_adj=0;
+  array_node_wt=0;
+  array_net_T=0;
+  opt_net_T=0;
+  array_net_Intf=0;
+  opt_net_Intf=0;
+}
+
+Conflict_G_Loc::~Conflict_G_Loc ()
+{
+  NS_LOG_FUNCTION (this);
+}
+
+void Conflict_G_Loc::calc_node_t()
+{
+  NS_LOG_FUNCTION (this);
+  NS_LOG_INFO(m_specManager->m_repository->m_count);
+}
+
 TypeId
 Bsync_Server::GetTypeId (void)
 {

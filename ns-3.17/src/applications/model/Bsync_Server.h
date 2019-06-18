@@ -3,6 +3,7 @@
 #include "ns3/ptr.h"
 #include "ns3/address.h"
 #include "ns3/Bsync_Common_headers.h"
+#include "ns3/spectrum-manager.h"
 
 namespace ns3 {
 
@@ -16,11 +17,43 @@ class Packet;
 
 /**
  * \ingroup Bsync_
- * \brief A Udp Echo server
- *
- * Every packet received is sent back.
  */
-class Bsync_Server : public Application
+
+class Conflict_G_Loc
+{
+public:
+	Conflict_G_Loc();
+	~Conflict_G_Loc();
+	void get_current_round();
+	void get_no_su();
+	void set_no_su();
+	void get_no_pu();
+	void set_no_pu();
+private:
+	int no_su;
+	int no_pu;
+	int current_depth;
+	double array_link_co;
+	double array_link_adj;
+	double array_node_wt;
+	double array_net_T;
+	double opt_net_T;
+	double array_net_Intf;
+	double opt_net_Intf;
+	SpectrumManager *m_specManager;
+	void calc_node_t();
+	void Obj();
+    double* link_co();
+    double* link_adj();
+    double calc_backoff_cond();
+    void exec_backoff_app();
+    void conflict();
+    void color_conflict();
+    void get_next_heuristic();
+    void stop_current_round();
+};
+
+class Bsync_Server : public Conflict_G_Loc, public Application
 {
 public:
   static TypeId GetTypeId (void);
