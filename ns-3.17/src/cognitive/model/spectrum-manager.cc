@@ -236,7 +236,27 @@ SpectrumManager::SenseEnded() {
 	}
 }
 
+int SpectrumManager::GetTotalFreeChannelsNow()
+{
+	int x;
+	if (this->IsChannelAvailable())
+	{
+		int current_channel=m_repository->GetRxChannel(m_nodeId);
 
+		// Set the sensing ON
+		m_isSensing=true;
+
+		#ifdef SENSING_VERBOSE_MODE
+			char buffer [50];
+			std::sprintf(buffer, "[SENSING-DBG] Node %d starts sensing on channel %d",m_nodeId,current_channel);
+			NS_LOG_DEBUG (buffer);
+		#endif
+
+		m_wifiPhy->StartSensing(m_senseTime);
+		x=1;
+	}
+	return x;
+}
 
 
 

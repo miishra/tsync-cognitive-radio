@@ -142,6 +142,8 @@ public:
 	 */
 	void SetRepository(Ptr<Repository> rep);
 
+	int GetTotalFreeChannelsNow();
+
 private:
 
 	// Spectrum Cycle Timers and Variables

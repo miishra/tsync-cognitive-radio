@@ -1,0 +1,3 @@
+/home/abhimishra/Desktop/tsync/tsync-cognitive-radio/ns-3.17/src/wifi/model/regular-wifi-mac.cc:763:      m_spectrumManager = new SpectrumManager(this, wifiPhy, m_node->GetId(), m_snsInterval, m_txInterval);
+/home/abhimishra/eclipse-workspace/tsync/tsync-cognitive-radio/ns-3.17/src/wifi/model/regular-wifi-mac.cc:763:      m_spectrumManager = new SpectrumManager(this, wifiPhy, m_node->GetId(), m_snsInterval, m_txInterval);
+/home/abhimishra/eclipse-workspace/tsync/tsync-cognitive-radio/ns-3.17/scratch/bsync.cc:107:  SpectrumManager *sm = new SpectrumManager(rwm,0);

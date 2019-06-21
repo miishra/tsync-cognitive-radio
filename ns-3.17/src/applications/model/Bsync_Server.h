@@ -19,46 +19,13 @@ class Packet;
  * \ingroup Bsync_
  */
 
-class Conflict_G_Loc
-{
-public:
-	Conflict_G_Loc();
-	~Conflict_G_Loc();
-	void get_current_round();
-	void get_no_su();
-	void set_no_su();
-	void get_no_pu();
-	void set_no_pu();
-private:
-	int no_su;
-	int no_pu;
-	int current_depth;
-	double array_link_co;
-	double array_link_adj;
-	double array_node_wt;
-	double array_net_T;
-	double opt_net_T;
-	double array_net_Intf;
-	double opt_net_Intf;
-	SpectrumManager *m_specManager;
-	void calc_node_t();
-	void Obj();
-    double* link_co();
-    double* link_adj();
-    double calc_backoff_cond();
-    void exec_backoff_app();
-    void conflict();
-    void color_conflict();
-    void get_next_heuristic();
-    void stop_current_round();
-};
-
-class Bsync_Server : public Conflict_G_Loc, public Application
+class Bsync_Server : public Application
 {
 public:
   static TypeId GetTypeId (void);
   Bsync_Server ();
   virtual ~Bsync_Server ();
+  SpectrumManager * m_spectrumManager;
 
 protected:
   virtual void DoDispose (void);
@@ -74,6 +41,7 @@ private:
   double increment_decrement(double x, double y);
   void reachedT(Ptr<Socket> socket);
   void transmitasONF(Ptr<Socket> socket);
+  void MyFunction(SpectrumManager * sm);
 
   uint16_t m_port;
   uint32_t m_sent;
@@ -95,6 +63,40 @@ private:
   double timestamp;
   int ref_flag;
   EventId m_event;
+};
+
+class Conflict_G_Loc : public Bsync_Server, public Application
+{
+public:
+	Conflict_G_Loc();
+	~Conflict_G_Loc();
+	void get_current_round();
+	void get_no_su();
+	void set_no_su();
+	void get_no_pu();
+	void set_no_pu();
+	SpectrumManager *m_specManager;
+private:
+	int no_su;
+	int no_pu;
+	int current_depth;
+	double array_link_co;
+	double array_link_adj;
+	double array_node_wt;
+	double array_net_T;
+	double opt_net_T;
+	double array_net_Intf;
+	double opt_net_Intf;
+	void calc_node_t();
+	void Obj();
+    double* link_co();
+    double* link_adj();
+    double calc_backoff_cond();
+    void exec_backoff_app();
+    void conflict();
+    void color_conflict();
+    void get_next_heuristic();
+    void stop_current_round();
 };
 
 } // namespace ns3

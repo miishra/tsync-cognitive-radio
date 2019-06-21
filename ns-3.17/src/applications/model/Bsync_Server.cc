@@ -12,6 +12,11 @@
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
 #include "ns3/core-module.h"
+#include "ns3/network-module.h"
+#include "ns3/wifi-module.h"
+#include <string>       // std::string
+#include <iostream>     // std::cout
+#include <sstream>      // std::ostringstream
 
 #include "Bsync_Server.h"
 
@@ -35,6 +40,7 @@ Conflict_G_Loc::Conflict_G_Loc ()
   opt_net_T=0;
   array_net_Intf=0;
   opt_net_Intf=0;
+  m_specManager=Bsync_Server::m_spectrumManager;
 }
 
 Conflict_G_Loc::~Conflict_G_Loc ()
@@ -45,7 +51,15 @@ Conflict_G_Loc::~Conflict_G_Loc ()
 void Conflict_G_Loc::calc_node_t()
 {
   NS_LOG_FUNCTION (this);
-  NS_LOG_INFO(m_specManager->m_repository->m_count);
+  double* array_node_wt = new double [no_su];
+  for (int i=0;i<no_su;i++)
+  {
+	  int tot_aval_channels = m_specManager->GetTotalFreeChannelsNow();
+	  array_node_wt[i]= (double) 1/tot_aval_channels;
+	  NS_LOG_INFO(array_node_wt[i]);
+  }
+  //m_specManager->IsChannelAvailable();
+  //NS_LOG_INFO(m_specManager->m_repository->m_count);
 }
 
 TypeId
@@ -101,9 +115,19 @@ Bsync_Server::DoDispose (void)
 }
 
 void
+Bsync_Server::MyFunction(SpectrumManager * sm)
+{
+  NS_LOG_FUNCTION (this);
+  m_spectrumManager=sm;
+}
+
+void
 Bsync_Server::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+  std::ostringstream oss;
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/DeviceList/" << "0" << "/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac";
+  Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::MyFunction,this));
 
   if (m_socket == 0)
     {
@@ -225,6 +249,8 @@ void
 Bsync_Server::StopApplication ()
 {
   NS_LOG_FUNCTION (this);
+  //Ptr<WifiNetDevice> wd = DynamicCast<WifiNetDevice> (this->GetNode()->GetDevice(0));
+  //wd->GetMac();
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "had final Timestamp: " << timestamp);
 

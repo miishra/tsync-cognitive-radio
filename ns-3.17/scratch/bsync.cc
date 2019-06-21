@@ -102,6 +102,10 @@ int main (int argc, char *argv[])
   Ptr<Repository> repo = CreateObject<Repository>();
   // Install the CR features into the nodes and return the list of devices
   NetDeviceContainer devices = wifi.InstallCR (repo, puModel, mobility, wifiPhy, wifiMac, c);
+  //ObjectFactory sm = wifi.m_stationManager;
+  /*Ptr<ns3::RegularWifiMac> rwm;
+  SpectrumManager *sm = new SpectrumManager(rwm,0);
+  NS_LOG_UNCOND(sm->IsChannelAvailable());*/
 
   // For each CR, we have 3 interfaces. Save the first interface in each
   // node which is the CTRL_IFACE in the device_control array.

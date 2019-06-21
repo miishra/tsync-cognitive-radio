@@ -620,6 +620,8 @@ RegularWifiMac::GetTypeId (void)
                    MakeBooleanAccessor (&RegularWifiMac::SetQosSupported,
                                         &RegularWifiMac::GetQosSupported),
                    MakeBooleanChecker ())
+	.AddTraceSource ("NewCallback"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&RegularWifiMac::m_Mycallback))
     .AddAttribute ("DcaTxop", "The DcaTxop object",
                    PointerValue (),
                    MakePointerAccessor (&RegularWifiMac::GetDcaTxop),
@@ -766,6 +768,7 @@ RegularWifiMac::SetRxRadio(bool isRx, Ptr<Node> node, Ptr<Repository> repo,
       m_spectrumManager->Start();
     }
   m_low->SetRxRadio(isRx);
+  m_Mycallback(m_spectrumManager);
 }
 
 } // namespace ns3
