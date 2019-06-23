@@ -27,7 +27,7 @@ struct RepositoryEntryRecv {
 
 // Channel Entry for sender nodes
 struct RepositoryEntrySend {
-	//Flag indicating wheter the channel is used for transmitting
+	//Flag indicating whether the channel is used for transmitting
 	bool active;
 	//Last time the channel was used
 	double time;
