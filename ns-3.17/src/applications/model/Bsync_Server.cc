@@ -27,11 +27,11 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("Bsync_ServerApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Server);
 
-Conflict_G_Loc::Conflict_G_Loc ()
+Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
 {
   NS_LOG_FUNCTION (this);
-  no_su=0;
-  no_pu=0;
+  no_su=num_su;
+  no_pu=num_pu;
   current_depth=0;
   array_link_co=0;
   array_link_adj=0;
@@ -118,15 +118,22 @@ void
 Bsync_Server::MyFunction(SpectrumManager * sm)
 {
   NS_LOG_FUNCTION (this);
+  bool isnull = false;
+  if (m_spectrumManager==NULL)
+	  isnull=true;
   m_spectrumManager=sm;
+
+  if (isnull)
+	  Simulator::Schedule (Seconds (0.5), &Bsync_Server::startCG, this);
 }
 
 void
 Bsync_Server::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+  //m_spectrumManager->IsChannelAvailable();
   std::ostringstream oss;
-  oss << "/NodeList/" << this->GetNode()->GetId() << "/DeviceList/" << "0" << "/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac";
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/DeviceList/" << "*" << "/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/NewCallback";
   Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::MyFunction,this));
 
   if (m_socket == 0)
@@ -215,6 +222,16 @@ void Bsync_Server::reachedT(Ptr<Socket> socket)
 	  m_event=Simulator::Schedule (Seconds(period), &Bsync_Server::reachedT, this, socket);//period
 }
 
+void Bsync_Server::startCG()
+{
+  NS_LOG_FUNCTION (this);
+  Conflict_G_Loc CG = Conflict_G_Loc(3, 2);
+  int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
+  if (!tot_free_channels)
+	  CG.array_node_wt = 1/tot_free_channels;
+  NS_LOG_UNCOND(CG.array_node_wt);
+}
+
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION (this);
@@ -249,6 +266,7 @@ void
 Bsync_Server::StopApplication ()
 {
   NS_LOG_FUNCTION (this);
+  NS_LOG_INFO(m_spectrumManager->IsChannelAvailable());
   //Ptr<WifiNetDevice> wd = DynamicCast<WifiNetDevice> (this->GetNode()->GetDevice(0));
   //wd->GetMac();
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");

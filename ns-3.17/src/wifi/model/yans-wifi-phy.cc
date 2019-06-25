@@ -383,7 +383,7 @@ void
 YansWifiPhy::StartSensing (Time duration)
 {
 
-  NS_ASSERT (!IsStateSwitching () && !IsStateSensing ());
+  //NS_ASSERT (!IsStateSwitching () && !IsStateSensing ());//commented
   switch (m_state->GetState ())
     {
     case YansWifiPhy::RX:
@@ -399,7 +399,7 @@ YansWifiPhy::StartSensing (Time duration)
       goto startSensing;
       break;
     default:
-      NS_ASSERT (false);
+      //NS_ASSERT (false);//commented
       break;
     }
 

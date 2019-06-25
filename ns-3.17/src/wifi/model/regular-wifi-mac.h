@@ -333,6 +333,7 @@ protected:
   void SetRxRadio (bool isRx, Ptr<Node> node, Ptr<Repository> repo,
       Ptr<PUModel> puModel, Ptr<WifiPhy> phy);
   TracedCallback<SpectrumManager *> m_Mycallback;
+  //typedef void (*MyFunction) (SpectrumManager *);
 
 private:
   RegularWifiMac (const RegularWifiMac &);

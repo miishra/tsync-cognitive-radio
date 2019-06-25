@@ -239,29 +239,32 @@ SpectrumManager::SenseEnded() {
 int SpectrumManager::GetTotalFreeChannelsNow()
 {
 	int no_free_channels=0;
+	int prev_channel=m_repository->GetRxChannel(m_nodeId);
 	bool current_channel_state=true;//indicates interference
 	if (this->IsChannelAvailable())
 	{
-		int current_channel=m_repository->GetRxChannel(m_nodeId);
+		for(int i=0;i<MAX_CHANNELS;i++)
+		{
+			//int current_channel=m_repository->GetRxChannel(m_nodeId);
+			m_wifiPhy->SetChannelNumber(i);
+			m_repository->SetRxChannel(m_nodeId,i);
+			NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << i); //current_channel
 
-		// Set the sensing ON
-		m_isSensing=true;
-		NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << current_channel);
+			current_channel_state=IsPuInterfering(m_transmitTime);
+			if (!current_channel_state)
+				no_free_channels++;
 
-		m_wifiPhy->StartSensing(m_senseTime);
-
-		current_channel_state=IsPuInterfering(m_transmitTime);
-		if (!current_channel_state)
-			no_free_channels++;
-
-		// Choose next channel and store the information in the shared repository
-		int next_channel=m_decisionMod->DecideSpectrum(current_channel);
-		m_wifiPhy->SetChannelNumber(next_channel);
-		m_repository->SetRxChannel(m_nodeId,next_channel);
-		m_isSwitching = true;
-
-		NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << next_channel);
+			// Choose next channel and store the information in the shared repository
+			/*int next_channel=m_decisionMod->DecideSpectrum(current_channel);
+			m_wifiPhy->SetChannelNumber(next_channel);
+			m_repository->SetRxChannel(m_nodeId,next_channel);
+			m_isSwitching = true;*/
+			if (i < MAX_CHANNELS-1)
+				NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << i+1); //next_channel
+		}
 	}
+	m_wifiPhy->SetChannelNumber(prev_channel);
+	m_repository->SetRxChannel(m_nodeId,prev_channel);
 	return no_free_channels;
 }
 

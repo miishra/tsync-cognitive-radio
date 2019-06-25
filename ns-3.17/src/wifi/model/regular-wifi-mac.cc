@@ -533,6 +533,9 @@ RegularWifiMac::RestartAccess()
 {
   NS_LOG_FUNCTION (this);
   m_dca->RestartAccessIfNeeded();
+
+  NS_LOG_UNCOND("Callback has been invoked");
+  m_Mycallback(m_spectrumManager);
 }
 
 void
@@ -768,7 +771,6 @@ RegularWifiMac::SetRxRadio(bool isRx, Ptr<Node> node, Ptr<Repository> repo,
       m_spectrumManager->Start();
     }
   m_low->SetRxRadio(isRx);
-  m_Mycallback(m_spectrumManager);
 }
 
 } // namespace ns3

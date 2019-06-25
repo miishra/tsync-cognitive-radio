@@ -26,6 +26,7 @@ public:
   Bsync_Server ();
   virtual ~Bsync_Server ();
   SpectrumManager * m_spectrumManager;
+  void startCG();
 
 protected:
   virtual void DoDispose (void);
@@ -68,15 +69,13 @@ private:
 class Conflict_G_Loc : public Bsync_Server, public Application
 {
 public:
-	Conflict_G_Loc();
+	Conflict_G_Loc(int num_su, int num_pu);
 	~Conflict_G_Loc();
 	void get_current_round();
 	void get_no_su();
 	void set_no_su();
 	void get_no_pu();
 	void set_no_pu();
-	SpectrumManager *m_specManager;
-private:
 	int no_su;
 	int no_pu;
 	int current_depth;
@@ -87,6 +86,8 @@ private:
 	double opt_net_T;
 	double array_net_Intf;
 	double opt_net_Intf;
+	SpectrumManager *m_specManager;
+private:
 	void calc_node_t();
 	void Obj();
     double* link_co();
