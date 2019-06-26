@@ -45,6 +45,7 @@ private:
   void MyFunction(SpectrumManager * sm);
 
   uint16_t m_port;
+  bool isSMupdated;
   uint32_t m_sent;
   uint32_t m_received;
   int m_period_count;

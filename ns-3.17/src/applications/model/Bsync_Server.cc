@@ -97,6 +97,7 @@ Bsync_Server::Bsync_Server ()
   m_sent=0;
   m_received=0;
   ref_flag=0;
+  isSMupdated = false;
   //cout << internal_timer << endl;
 }
 
@@ -118,13 +119,11 @@ void
 Bsync_Server::MyFunction(SpectrumManager * sm)
 {
   NS_LOG_FUNCTION (this);
-  bool isnull = false;
-  if (m_spectrumManager==NULL)
-	  isnull=true;
   m_spectrumManager=sm;
 
-  if (isnull)
+  if (!isSMupdated)
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Server::startCG, this);
+
 }
 
 void
@@ -227,9 +226,10 @@ void Bsync_Server::startCG()
   NS_LOG_FUNCTION (this);
   Conflict_G_Loc CG = Conflict_G_Loc(3, 2);
   int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
-  if (!tot_free_channels)
-	  CG.array_node_wt = 1/tot_free_channels;
+  if (tot_free_channels!=0)
+	  CG.array_node_wt = 1/(tot_free_channels*1.0);
   NS_LOG_UNCOND(CG.array_node_wt);
+  isSMupdated = true;
 }
 
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)
