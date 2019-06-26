@@ -104,6 +104,7 @@ public:
   * \return the number of stream indices assigned by this model
   */
   int64_t AssignStreams (int64_t stream);
+  TracedCallback<double> m_MyHelloReceiveCallback;
 
 private:
   ///\name Protocol parameters.

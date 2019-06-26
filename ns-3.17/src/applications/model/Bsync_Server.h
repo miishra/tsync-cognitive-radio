@@ -43,6 +43,7 @@ private:
   void reachedT(Ptr<Socket> socket);
   void transmitasONF(Ptr<Socket> socket);
   void MyFunction(SpectrumManager * sm);
+  void ReceivedNeighbourSNR(double snr);
 
   uint16_t m_port;
   bool isSMupdated;

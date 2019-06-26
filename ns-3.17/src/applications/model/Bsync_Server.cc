@@ -126,6 +126,12 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
 
 }
 
+void Bsync_Server::ReceivedNeighbourSNR(double snr)
+{
+	NS_LOG_FUNCTION (this);
+	NS_LOG_INFO (snr);
+}
+
 void
 Bsync_Server::StartApplication (void)
 {
@@ -134,6 +140,11 @@ Bsync_Server::StartApplication (void)
   std::ostringstream oss;
   oss << "/NodeList/" << this->GetNode()->GetId() << "/DeviceList/" << "*" << "/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/NewCallback";
   Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::MyFunction,this));
+
+  oss.str("");
+  oss.clear();
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/HelloReceiveCallback";
+  Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::ReceivedNeighbourSNR,this));
 
   if (m_socket == 0)
     {

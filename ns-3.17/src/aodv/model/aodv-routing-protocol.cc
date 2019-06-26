@@ -165,6 +165,8 @@ RoutingProtocol::GetTypeId (void)
                    TimeValue (Seconds (1)),
                    MakeTimeAccessor (&RoutingProtocol::HelloInterval),
                    MakeTimeChecker ())
+	.AddTraceSource ("HelloReceiveCallback"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallback))
     .AddAttribute ("RreqRetries", "Maximum number of retransmissions of RREQ to discover a route",
                    UintegerValue (2),
                    MakeUintegerAccessor (&RoutingProtocol::RreqRetries),
@@ -1327,6 +1329,9 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   // If RREP is Hello message
   if (dst == rrepHeader.GetOrigin ())
     {
+	  NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
+	  double received_snr=90.1;
+	  m_MyHelloReceiveCallback(received_snr);
       ProcessHello (rrepHeader, receiver);
       return;
     }
