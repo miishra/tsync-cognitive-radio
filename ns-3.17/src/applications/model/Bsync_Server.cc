@@ -18,6 +18,20 @@
 #include <iostream>     // std::cout
 #include <sstream>      // std::ostringstream
 
+#include <iomanip>
+#include "ns3/command-line.h"
+#include "ns3/config.h"
+#include "ns3/string.h"
+#include "ns3/yans-wifi-helper.h"	`
+#include "ns3/packet-sink.h"
+#include "ns3/yans-wifi-channel.h"
+#include "ns3/multi-model-spectrum-channel.h"
+#include "ns3/propagation-loss-model.h"
+#include "ns3/waveform-generator.h"
+#include "ns3/waveform-generator-helper.h"
+#include "ns3/non-communicating-net-device.h"
+#include "ns3/wifi-net-device.h"
+
 #include "Bsync_Server.h"
 
 using namespace std;

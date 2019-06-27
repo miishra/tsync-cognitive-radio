@@ -41,6 +41,7 @@
 #include "ns3/pointer.h"
 #include <algorithm>
 #include <limits>
+#include <cstdlib>
 
 NS_LOG_COMPONENT_DEFINE ("AodvRoutingProtocol");
 
@@ -153,6 +154,7 @@ RoutingProtocol::RoutingProtocol () :
     {
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
+  Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
 }
 
 TypeId
@@ -264,6 +266,23 @@ RoutingProtocol::GetTypeId (void)
                    MakePointerChecker<UniformRandomVariable> ())
   ;
   return tid;
+}
+
+void RoutingProtocol::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm)
+{
+	NS_LOG_FUNCTION (this);
+	if (packet)
+	{
+		Ptr<Packet> copy = packet->Copy ();
+		WifiMacHeader mh;//Ipv4Header
+		copy->RemoveHeader (mh);
+		//Ipv4Header iph;
+		//copy->RemoveHeader (iph);
+		double snrval = 10*log10(pow(10,(signalDbm-30)/10)/pow(10,(noiseDbm-30)/10));
+		NS_LOG_UNCOND("Entered MonitorSniffRx with SNR: " << snrval << " Db for a packet from: "  << mh.GetAddr2() << " to: " << mh.GetAddr1());
+		TypeHeader tHeader (AODVTYPE_RREQ);
+		//packet->RemoveHeader(tHeader);
+	}
 }
 
 void
