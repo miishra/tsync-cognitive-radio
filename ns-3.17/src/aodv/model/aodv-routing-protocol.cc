@@ -154,7 +154,7 @@ RoutingProtocol::RoutingProtocol () :
     {
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
-  Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
+  //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
 }
 
 TypeId
@@ -268,7 +268,7 @@ RoutingProtocol::GetTypeId (void)
   return tid;
 }
 
-void RoutingProtocol::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm)
+/*void RoutingProtocol::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm)
 {
 	NS_LOG_FUNCTION (this);
 	if (packet)
@@ -276,14 +276,19 @@ void RoutingProtocol::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t cha
 		Ptr<Packet> copy = packet->Copy ();
 		WifiMacHeader mh;//Ipv4Header
 		copy->RemoveHeader (mh);
+		PacketTypePacketTag ptpt;
+		PacketChannelPacketTag pcpt;
+		bool foundpt = packet->PeekPacketTag(ptpt);
+		bool foundpc = packet->PeekPacketTag(pcpt);
+		//ptpt.Print(std::cout);
 		//Ipv4Header iph;
 		//copy->RemoveHeader (iph);
 		double snrval = 10*log10(pow(10,(signalDbm-30)/10)/pow(10,(noiseDbm-30)/10));
-		NS_LOG_UNCOND("Entered MonitorSniffRx with SNR: " << snrval << " Db for a packet from: "  << mh.GetAddr2() << " to: " << mh.GetAddr1());
+		NS_LOG_UNCOND("Entered MonitorSniffRx with SNR: " << snrval << " Db for a packet from: "  << mh.GetAddr2() << " to: " << mh.GetAddr1() << " of type: " << ptpt.Get() << " in channel: " << channelNumber);
 		TypeHeader tHeader (AODVTYPE_RREQ);
 		//packet->RemoveHeader(tHeader);
 	}
-}
+}*/
 
 void
 RoutingProtocol::SetMaxQueueLen (uint32_t len)
@@ -1349,8 +1354,16 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   if (dst == rrepHeader.GetOrigin ())
     {
 	  NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
-	  double received_snr=90.1;
-	  m_MyHelloReceiveCallback(received_snr);
+	  Ptr<Packet> copy = p->Copy ();
+	  /*Ipv4Header iph;
+	  copy->RemoveHeader (iph);*/
+	  PacketTypePacketTag ptpt;
+	  PacketChannelPacketTag pcpt;
+	  bool foundpt = p->PeekPacketTag(ptpt);
+	  bool foundpc = p->PeekPacketTag(pcpt);
+	  NS_LOG_UNCOND("Got Hello Packet from: "  << rrepHeader.GetOrigin () << " of type: " << ptpt.Get() << " channel number: " << rrepHeader.GetRXChannel() << "[node " << m_ipv4->GetObject<Node> ()->GetId () << "] ");
+	  int helloseqno=1;
+	  m_MyHelloReceiveCallback(helloseqno);
       ProcessHello (rrepHeader, receiver);
       return;
     }
@@ -1667,6 +1680,7 @@ RoutingProtocol::SendHello ()
       TypeHeader tHeader (AODVTYPE_RREP);
       packet->AddHeader (tHeader);
       PacketTypePacketTag bt = ns3::PacketTypePacketTag(CTRL_PACKET);
+      bt.set_node_id(m_ipv4->GetObject<Node> ()->GetId ());
       packet->AddPacketTag(bt);
       // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
       Ipv4Address destination;

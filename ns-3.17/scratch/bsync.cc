@@ -102,6 +102,12 @@ int main (int argc, char *argv[])
   Ptr<Repository> repo = CreateObject<Repository>();
   // Install the CR features into the nodes and return the list of devices
   NetDeviceContainer devices = wifi.InstallCR (repo, puModel, mobility, wifiPhy, wifiMac, c);
+
+  NS_LOG_INFO("Allocated MAC address for Nodes are: ");
+  for (uint32_t i=0; i<devices.GetN(); i++) {
+	  NS_LOG_INFO(devices.Get(i)->GetAddress());
+    }
+
   //ObjectFactory sm = wifi.m_stationManager;
   /*Ptr<ns3::RegularWifiMac> rwm;
   SpectrumManager *sm = new SpectrumManager(rwm,0);

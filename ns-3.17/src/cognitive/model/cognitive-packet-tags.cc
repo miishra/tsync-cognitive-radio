@@ -25,6 +25,7 @@ namespace ns3 {
 PacketTypePacketTag::PacketTypePacketTag (PacketType t) :
   m_type (t)
 {
+	sending_node_id=-1;
 }
 
 TypeId
@@ -45,17 +46,24 @@ PacketTypePacketTag::GetInstanceTypeId (void) const
 uint32_t
 PacketTypePacketTag::GetSerializedSize (void) const
 {
-  return 1;
+  return 5;
 }
 void
 PacketTypePacketTag::Serialize (TagBuffer i) const
 {
   i.WriteU8 (m_type);
+  i.WriteU32 (sending_node_id);
+}
+void
+PacketTypePacketTag::set_node_id(int node_id)
+{
+	sending_node_id = node_id;
 }
 void
 PacketTypePacketTag::Deserialize (TagBuffer i)
 {
   m_type = (PacketType) i.ReadU8 ();
+  sending_node_id = (int) i.ReadU32 ();
 }
 
 void

@@ -13,6 +13,7 @@
 #include "ns3/uinteger.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
+#include "ns3/internet-module.h"
 #include "ns3/wifi-module.h"
 #include <string>       // std::string
 #include <iostream>     // std::cout
@@ -31,6 +32,8 @@
 #include "ns3/waveform-generator-helper.h"
 #include "ns3/non-communicating-net-device.h"
 #include "ns3/wifi-net-device.h"
+
+#include "ns3/aodv-module.h"
 
 #include "Bsync_Server.h"
 
@@ -112,7 +115,33 @@ Bsync_Server::Bsync_Server ()
   m_received=0;
   ref_flag=0;
   isSMupdated = false;
+  tot_packet_sniffed_rx=0;
   //cout << internal_timer << endl;
+}
+
+void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm)
+{
+	//NS_LOG_FUNCTION (this);
+	if (packet)
+	{
+		tot_packet_sniffed_rx++;
+		Ptr<Packet> copy = packet->Copy ();
+		//RrepHeader rrepHeader;
+		//WifiMacHeader mh;//Ipv4Header
+		//copy->RemoveHeader (mh);
+		PacketTypePacketTag ptpt;
+		PacketChannelPacketTag pcpt;
+		bool foundpt = packet->PeekPacketTag(ptpt);
+		bool foundpc = packet->PeekPacketTag(pcpt);
+		//ptpt.Print(std::cout);
+		//Ipv4Header iph;
+		//copy->RemoveHeader (iph);
+		double snrval = 10*log10(pow(10,(signalDbm-30)/10)/pow(10,(noiseDbm-30)/10));
+		if (ptpt.sending_node_id!=-1)
+			NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
+		//TypeHeader tHeader (AODVTYPE_RREQ);
+		//packet->RemoveHeader(tHeader);
+	}
 }
 
 Bsync_Server::~Bsync_Server()
@@ -140,10 +169,10 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
 
 }
 
-void Bsync_Server::ReceivedNeighbourSNR(double snr)
+void Bsync_Server::ReceivedNeighbourSNR(int helloSeqNo)
 {
 	NS_LOG_FUNCTION (this);
-	NS_LOG_INFO (snr);
+	//NS_LOG_INFO (helloSeqNo);
 }
 
 void
@@ -154,6 +183,8 @@ Bsync_Server::StartApplication (void)
   std::ostringstream oss;
   oss << "/NodeList/" << this->GetNode()->GetId() << "/DeviceList/" << "*" << "/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/NewCallback";
   Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::MyFunction,this));
+
+  Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&Bsync_Server::MonitorSniffRxCall, this));
 
   oss.str("");
   oss.clear();
@@ -308,6 +339,11 @@ Bsync_Server::StopApplication ()
       m_socket6->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     }
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
+  NS_LOG_UNCOND("Total number of received Packets Sniffed at node: " << this->GetNode()->GetId() << " is: " << tot_packet_sniffed_rx);
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
+  //Ptr<ns3::Ipv4RoutingHelper> routing = node -> GetObject<RoutingProtocol>();
 }
 
 void
@@ -323,6 +359,10 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
     {
 	  ++m_received;
       uint8_t *buffer = new uint8_t[packet->GetSize ()];
+      /*PacketTypePacketTag ptpt;
+      PacketChannelPacketTag pcpt;
+      bool foundpt = packet->PeekPacketTag(ptpt);
+      bool foundpc = packet->PeekPacketTag(pcpt);*/
       packet->CopyData(buffer, packet->GetSize ());
       //std::string s = std::string((char*)buffer);
       if (InetSocketAddress::IsMatchingType (from))

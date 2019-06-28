@@ -43,7 +43,9 @@ private:
   void reachedT(Ptr<Socket> socket);
   void transmitasONF(Ptr<Socket> socket);
   void MyFunction(SpectrumManager * sm);
-  void ReceivedNeighbourSNR(double snr);
+  void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
+  TracedCallback<double> m_MyHelloReceiveCallback;
+  void ReceivedNeighbourSNR(int helloSeqNo);
 
   uint16_t m_port;
   bool isSMupdated;
@@ -59,6 +61,7 @@ private:
   uint32_t period;
   uint32_t m_size;
   uint32_t m_node_id;
+  int tot_packet_sniffed_rx;
   double stop_time;
   double internal_timer;
   double last_internal_timer_update;

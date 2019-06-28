@@ -46,6 +46,8 @@ public:
   void Print (std::ostream &os) const;
   void Set (PacketType m_type);
   PacketType Get () const { return m_type; }
+  void set_node_id(int node_id);
+  int sending_node_id;
 
 private:
   PacketType m_type;
