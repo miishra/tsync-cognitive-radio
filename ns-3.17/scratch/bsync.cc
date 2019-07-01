@@ -136,6 +136,8 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("Number of Ordinary Nodes: " << c.GetN()-1);
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
+  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+
   uint16_t port = 9;  // well-known echo port number
   Bsync_ServerHelper server (port);
   ApplicationContainer apps;

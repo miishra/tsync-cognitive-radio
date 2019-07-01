@@ -37,6 +37,9 @@
 
 #include "Bsync_Server.h"
 
+#include <fstream>
+
+
 using namespace std;
 
 namespace ns3 {
@@ -49,6 +52,7 @@ Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
   NS_LOG_FUNCTION (this);
   no_su=num_su;
   no_pu=num_pu;
+  bool *ConnectedNodeStatus = new bool[num_su]();
   current_depth=0;
   array_link_co=0;
   array_link_adj=0;
@@ -77,6 +81,30 @@ void Conflict_G_Loc::calc_node_t()
   }
   //m_specManager->IsChannelAvailable();
   //NS_LOG_INFO(m_specManager->m_repository->m_count);
+}
+
+void Conflict_G_Loc::conflict()
+{
+  NS_LOG_FUNCTION (this);
+
+  Ipv4GlobalRoutingHelper g;
+  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("dynamic-global-routing.routes", std::ios::out);
+  g.PrintRoutingTableAllAt (Seconds (0.0), routingStream);
+
+  std::ifstream infile("dynamic-global-routing.routes");
+
+  std::string line;
+  int current_node_id=-1;
+  std::string dest_ip, link_status, gen_string;
+  while (std::getline(infile, line, ' '))
+  {
+  	std::istringstream iss(line);
+  	/*if (!(iss >> gen_string))
+  	{
+  		break;
+  	}*/
+  	std::cout << line << endl;
+  }
 }
 
 TypeId

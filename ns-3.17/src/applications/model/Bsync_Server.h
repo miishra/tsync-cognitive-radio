@@ -4,6 +4,7 @@
 #include "ns3/address.h"
 #include "ns3/Bsync_Common_headers.h"
 #include "ns3/spectrum-manager.h"
+#include "ns3/aodv-rtable.h"
 
 namespace ns3 {
 
@@ -46,6 +47,7 @@ private:
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<double> m_MyHelloReceiveCallback;
   void ReceivedNeighbourSNR(int helloSeqNo);
+  void GetRoutingTable();
 
   uint16_t m_port;
   bool isSMupdated;
@@ -69,6 +71,7 @@ private:
   double timestamp;
   int ref_flag;
   EventId m_event;
+  //RoutingTable m_routingTableApp;
 };
 
 class Conflict_G_Loc : public Bsync_Server, public Application
@@ -92,6 +95,7 @@ public:
 	double array_net_Intf;
 	double opt_net_Intf;
 	SpectrumManager *m_specManager;
+	bool *ConnectedNodeStatus;
 private:
 	void calc_node_t();
 	void Obj();

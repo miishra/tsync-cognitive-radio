@@ -167,6 +167,8 @@ RoutingProtocol::GetTypeId (void)
                    TimeValue (Seconds (1)),
                    MakeTimeAccessor (&RoutingProtocol::HelloInterval),
                    MakeTimeChecker ())
+	.AddTraceSource ("RoutingTableCallback"," pass routing table to application ",
+				   MakeTraceSourceAccessor (&RoutingProtocol::m_sendRoutingTableCallback))
 	.AddTraceSource ("HelloReceiveCallback"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallback))
     .AddAttribute ("RreqRetries", "Maximum number of retransmissions of RREQ to discover a route",

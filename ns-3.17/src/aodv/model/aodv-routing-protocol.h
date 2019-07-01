@@ -105,6 +105,7 @@ public:
   */
   int64_t AssignStreams (int64_t stream);
   //void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
+  TracedCallback<RoutingTable> m_sendRoutingTableCallback;
   TracedCallback<int> m_MyHelloReceiveCallback;
 
 private:
