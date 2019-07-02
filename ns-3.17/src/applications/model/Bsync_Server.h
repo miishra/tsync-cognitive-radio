@@ -96,7 +96,6 @@ public:
 	double opt_net_Intf;
 	SpectrumManager *m_specManager;
 	bool *ConnectedNodeStatus;
-private:
 	void calc_node_t();
 	void Obj();
     double* link_co();
@@ -105,6 +104,7 @@ private:
     void exec_backoff_app();
     void conflict();
     void color_conflict();
+private:
     void get_next_heuristic();
     void stop_current_round();
 };

@@ -89,7 +89,7 @@ void Conflict_G_Loc::conflict()
 
   Ipv4GlobalRoutingHelper g;
   Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("dynamic-global-routing.routes", std::ios::out);
-  g.PrintRoutingTableAllAt (Seconds (0.0), routingStream);
+  g.PrintRoutingTableAt (Seconds (0.0), Bsync_Server::GetNode(), routingStream);
 
   std::ifstream infile("dynamic-global-routing.routes");
 
@@ -207,6 +207,7 @@ void
 Bsync_Server::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+  //CG.conflict();
   //m_spectrumManager->IsChannelAvailable();
   std::ostringstream oss;
   oss << "/NodeList/" << this->GetNode()->GetId() << "/DeviceList/" << "*" << "/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/NewCallback";
