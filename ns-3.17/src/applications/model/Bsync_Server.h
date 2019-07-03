@@ -46,7 +46,7 @@ private:
   void MyFunction(SpectrumManager * sm);
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<double> m_MyHelloReceiveCallback;
-  void ReceivedNeighbourSNR(int helloSeqNo);
+  void ReceivedNeighbourSNR(Ipv4Address source, int node_id);
   void GetRoutingTable();
 
   uint16_t m_port;
@@ -95,14 +95,13 @@ public:
 	double array_net_Intf;
 	double opt_net_Intf;
 	SpectrumManager *m_specManager;
-	bool *ConnectedNodeStatus;
 	void calc_node_t();
 	void Obj();
     double* link_co();
     double* link_adj();
     double calc_backoff_cond();
     void exec_backoff_app();
-    void conflict();
+    void conflict(Ptr<Node> current_node);
     void color_conflict();
 private:
     void get_next_heuristic();

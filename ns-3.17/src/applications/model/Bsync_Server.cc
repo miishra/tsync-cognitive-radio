@@ -47,12 +47,15 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("Bsync_ServerApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Server);
 
+Conflict_G_Loc ConflictG(3,2);
+bool *ConnectedNodeStatus;
+
 Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
 {
   NS_LOG_FUNCTION (this);
   no_su=num_su;
   no_pu=num_pu;
-  bool *ConnectedNodeStatus = new bool[num_su]();
+  ConnectedNodeStatus = new bool[num_su+num_pu]();
   current_depth=0;
   array_link_co=0;
   array_link_adj=0;
@@ -83,27 +86,49 @@ void Conflict_G_Loc::calc_node_t()
   //NS_LOG_INFO(m_specManager->m_repository->m_count);
 }
 
-void Conflict_G_Loc::conflict()
+void Conflict_G_Loc::conflict(Ptr<Node> current_node)
 {
   NS_LOG_FUNCTION (this);
 
   Ipv4GlobalRoutingHelper g;
-  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("dynamic-global-routing.routes", std::ios::out);
-  g.PrintRoutingTableAt (Seconds (0.0), Bsync_Server::GetNode(), routingStream);
+  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (to_string(current_node->GetId()) + "dynamic-global-routing.routes", std::ios::out);
+  g.PrintRoutingTableAt (Seconds (0.0), current_node, routingStream);
 
-  std::ifstream infile("dynamic-global-routing.routes");
+  std::ifstream infile(to_string(current_node->GetId()) + "dynamic-global-routing.routes");
 
   std::string line;
-  int current_node_id=-1;
-  std::string dest_ip, link_status, gen_string;
-  while (std::getline(infile, line, ' '))
+  int current_node_id=-1, line_count=1, hop_count;
+  std::string dest_ip, link_status, gen_string, delim="\t";
+  while (std::getline(infile, line))
   {
   	std::istringstream iss(line);
   	/*if (!(iss >> gen_string))
   	{
   		break;
   	}*/
-  	std::cout << line << endl;
+  	//std::cout << line << endl;
+  	if (line_count>3)
+  	{
+  		size_t pos = 0;
+  		std::string token;
+  		int place=1;
+  		while ((pos = line.find(delim)) != std::string::npos) {
+  		    token = line.substr(0, pos);
+  		    if (place==1)
+  		    	dest_ip.assign(token);
+  		    else if (place==4)
+  		    	link_status.assign(token);
+  		    else if (place==6)
+  		    	hop_count=stoi(token);
+  		    line.erase(0, pos + delim.length());
+  		    place++;
+  		}
+  	}
+  	line_count++;
+  	if (link_status.compare("UP")==0 && hop_count==1)
+  	{
+  		ConnectedNodeStatus[0]=true;
+  	}
   }
 }
 
@@ -166,7 +191,10 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 		//copy->RemoveHeader (iph);
 		double snrval = 10*log10(pow(10,(signalDbm-30)/10)/pow(10,(noiseDbm-30)/10));
 		if (ptpt.sending_node_id!=-1)
+		{
 			NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
+			ConnectedNodeStatus[ptpt.sending_node_id]=true;
+		}
 		//TypeHeader tHeader (AODVTYPE_RREQ);
 		//packet->RemoveHeader(tHeader);
 	}
@@ -197,10 +225,13 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
 
 }
 
-void Bsync_Server::ReceivedNeighbourSNR(int helloSeqNo)
+void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id)
 {
 	NS_LOG_FUNCTION (this);
-	//NS_LOG_INFO (helloSeqNo);
+
+	//std::cout << this->GetNode()->GetId() <<  endl;
+	ConflictG.conflict(this->GetNode());
+	NS_LOG_INFO (source << node_id);
 }
 
 void
@@ -309,11 +340,11 @@ void Bsync_Server::reachedT(Ptr<Socket> socket)
 void Bsync_Server::startCG()
 {
   NS_LOG_FUNCTION (this);
-  Conflict_G_Loc CG = Conflict_G_Loc(3, 2);
+  //ConflictG = Conflict_G_Loc(3, 2);
   int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
   if (tot_free_channels!=0)
-	  CG.array_node_wt = 1/(tot_free_channels*1.0);
-  NS_LOG_UNCOND(CG.array_node_wt);
+	  ConflictG.array_node_wt = 1/(tot_free_channels*1.0);
+  NS_LOG_UNCOND(ConflictG.array_node_wt);
   isSMupdated = true;
 }
 

@@ -1365,7 +1365,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  bool foundpc = p->PeekPacketTag(pcpt);
 	  NS_LOG_UNCOND("Got Hello Packet from: "  << rrepHeader.GetOrigin () << " of type: " << ptpt.Get() << " channel number: " << rrepHeader.GetRXChannel() << "[node " << m_ipv4->GetObject<Node> ()->GetId () << "] ");
 	  int helloseqno=1;
-	  m_MyHelloReceiveCallback(helloseqno);
+	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), m_ipv4->GetObject<Node> ()->GetId ());
       ProcessHello (rrepHeader, receiver);
       return;
     }
