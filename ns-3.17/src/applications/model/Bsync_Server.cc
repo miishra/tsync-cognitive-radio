@@ -57,8 +57,8 @@ Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
   no_pu=num_pu;
   ConnectedNodeStatus = new bool[num_su+num_pu]();
   current_depth=0;
-  array_link_co=0;
-  array_link_adj=0;
+  array_link_co= new double[num_su]();
+  array_link_adj= new double[num_su]();
   array_node_wt=0;
   array_net_T=0;
   opt_net_T=0;
@@ -84,6 +84,16 @@ void Conflict_G_Loc::calc_node_t()
   }
   //m_specManager->IsChannelAvailable();
   //NS_LOG_INFO(m_specManager->m_repository->m_count);
+}
+
+void Conflict_G_Loc::link_co(int node_id, double snrval)
+{
+  NS_LOG_FUNCTION (this);
+  array_link_co[node_id]=1/snrval;
+
+  /*for (int j=0;j<no_su;j++)
+    	  cout << array_link_co[j] << "\t";
+  cout << endl;*/
 }
 
 void Conflict_G_Loc::conflict(Ptr<Node> current_node)
@@ -127,7 +137,7 @@ void Conflict_G_Loc::conflict(Ptr<Node> current_node)
   	line_count++;
   	if (link_status.compare("UP")==0 && hop_count==1)
   	{
-  		ConnectedNodeStatus[0]=true;
+  		ConnectedNodeStatus[ip_nodeid_hash[Ipv4Address(dest_ip.c_str())]]=true;
   	}
   }
 }
@@ -192,8 +202,9 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 		double snrval = 10*log10(pow(10,(signalDbm-30)/10)/pow(10,(noiseDbm-30)/10));
 		if (ptpt.sending_node_id!=-1)
 		{
-			NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
+			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
 			ConnectedNodeStatus[ptpt.sending_node_id]=true;
+			ConflictG.link_co(ptpt.sending_node_id, snrval);
 		}
 		//TypeHeader tHeader (AODVTYPE_RREQ);
 		//packet->RemoveHeader(tHeader);
@@ -230,14 +241,18 @@ void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id)
 	NS_LOG_FUNCTION (this);
 
 	//std::cout << this->GetNode()->GetId() <<  endl;
+	ip_nodeid_hash[source] = node_id;
 	ConflictG.conflict(this->GetNode());
-	NS_LOG_INFO (source << node_id);
+	//NS_LOG_INFO (source << "\t" << node_id);
 }
 
 void
 Bsync_Server::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+  Ptr<Ipv4> ipv4 = this->GetNode()->GetObject<Ipv4> ();
+  Ipv4InterfaceAddress iaddr = ipv4->GetAddress (1,0);
+  ip_nodeid_hash[iaddr.GetLocal()] = this->GetNode()->GetId();
   //CG.conflict();
   //m_spectrumManager->IsChannelAvailable();
   std::ostringstream oss;
@@ -373,7 +388,7 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 	  socket->SendTo (data, 0, Ipv4Address ("255.255.255.255"));
 	  ++m_sent;
 	  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
-			  Ipv4Address ("255.255.255.255") << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
+	  Ipv4Address ("255.255.255.255") << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
       //Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);//period+0.0000001
   }
 }
@@ -402,6 +417,15 @@ Bsync_Server::StopApplication ()
 
   NS_LOG_UNCOND("Total number of received Packets Sniffed at node: " << this->GetNode()->GetId() << " is: " << tot_packet_sniffed_rx);
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
+  /*for (int j=0;j<5;j++)
+	  cout << ConnectedNodeStatus[j];
+  cout << endl;*/
+
+  /*for(auto elem : ip_nodeid_hash)
+  {
+     std::cout << elem.first << " " << elem.second << "\n";
+  }*/
 
   //Ptr<ns3::Ipv4RoutingHelper> routing = node -> GetObject<RoutingProtocol>();
 }

@@ -5,6 +5,9 @@
 #include "ns3/Bsync_Common_headers.h"
 #include "ns3/spectrum-manager.h"
 #include "ns3/aodv-rtable.h"
+#include <map>
+#include <iostream>
+#include <cassert>
 
 namespace ns3 {
 
@@ -27,6 +30,7 @@ public:
   Bsync_Server ();
   virtual ~Bsync_Server ();
   SpectrumManager * m_spectrumManager;
+  std::map<Ipv4Address, int> ip_nodeid_hash;
   void startCG();
 
 protected:
@@ -87,8 +91,8 @@ public:
 	int no_su;
 	int no_pu;
 	int current_depth;
-	double array_link_co;
-	double array_link_adj;
+	double* array_link_co;
+	double* array_link_adj;
 	double array_node_wt;
 	double array_net_T;
 	double opt_net_T;
@@ -97,8 +101,8 @@ public:
 	SpectrumManager *m_specManager;
 	void calc_node_t();
 	void Obj();
-    double* link_co();
-    double* link_adj();
+    void link_co(int node_id, double snrval);
+    void link_adj();
     double calc_backoff_cond();
     void exec_backoff_app();
     void conflict(Ptr<Node> current_node);

@@ -1355,7 +1355,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   // If RREP is Hello message
   if (dst == rrepHeader.GetOrigin ())
     {
-	  NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
+	  //NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
 	  Ptr<Packet> copy = p->Copy ();
 	  /*Ipv4Header iph;
 	  copy->RemoveHeader (iph);*/
@@ -1363,9 +1363,9 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  PacketChannelPacketTag pcpt;
 	  bool foundpt = p->PeekPacketTag(ptpt);
 	  bool foundpc = p->PeekPacketTag(pcpt);
-	  NS_LOG_UNCOND("Got Hello Packet from: "  << rrepHeader.GetOrigin () << " of type: " << ptpt.Get() << " channel number: " << rrepHeader.GetRXChannel() << "[node " << m_ipv4->GetObject<Node> ()->GetId () << "] ");
+	  //NS_LOG_UNCOND("Got Hello Packet from: "  << rrepHeader.GetOrigin () << " of type: " << ptpt.Get() << " channel number: " << rrepHeader.GetRXChannel() << "[node " << m_ipv4->GetObject<Node> ()->GetId () << "] ");
 	  int helloseqno=1;
-	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), m_ipv4->GetObject<Node> ()->GetId ());
+	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), ptpt.sending_node_id);
       ProcessHello (rrepHeader, receiver);
       return;
     }

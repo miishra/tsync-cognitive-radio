@@ -534,7 +534,7 @@ RegularWifiMac::RestartAccess()
   NS_LOG_FUNCTION (this);
   m_dca->RestartAccessIfNeeded();
 
-  NS_LOG_UNCOND("Callback has been invoked");
+  //NS_LOG_UNCOND("Callback has been invoked");
   m_Mycallback(m_spectrumManager);
 }
 
