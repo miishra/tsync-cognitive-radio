@@ -49,7 +49,8 @@ private:
   void transmitasONF(Ptr<Socket> socket);
   void MyFunction(SpectrumManager * sm);
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
-  TracedCallback<double> m_MyHelloReceiveCallback;
+  TracedCallback<SpectrumManager *> m_SetSpecAODVCallback;
+  TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback;
   void ReceivedNeighbourSNR(Ipv4Address source, int node_id);
   void GetRoutingTable();
 

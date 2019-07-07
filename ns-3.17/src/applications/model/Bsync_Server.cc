@@ -152,6 +152,8 @@ Bsync_Server::GetTypeId (void)
                    UintegerValue (9),
                    MakeUintegerAccessor (&Bsync_Server::m_port),
                    MakeUintegerChecker<uint16_t> ())
+	.AddTraceSource ("SetSpecAODVCallback"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&Bsync_Server::m_SetSpecAODVCallback))
    /*.AddAttribute ("Node ID", "ID of node on which this sever application is installed.",
 					  UintegerValue (1000),
 					  MakeUintegerAccessor (&Bsync_Server::m_node_id),
@@ -232,7 +234,10 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
   m_spectrumManager=sm;
 
   if (!isSMupdated)
+  {
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Server::startCG, this);
+	  m_SetSpecAODVCallback(m_spectrumManager);
+  }
 
 }
 

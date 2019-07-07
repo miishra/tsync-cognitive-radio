@@ -341,6 +341,7 @@ void
 RoutingProtocol::Start ()
 {
   NS_LOG_FUNCTION (this);
+  Config::ConnectWithoutContext ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Server/SetSpecAODVCallback", MakeCallback (&RoutingProtocol::setSpecManager, this));
   if (EnableHello)
     {
       m_nb.ScheduleTimer ();
@@ -1658,6 +1659,16 @@ RoutingProtocol::AckTimerExpire (Ipv4Address neighbor, Time blacklistTimeout)
 {
   NS_LOG_FUNCTION (this);
   m_routingTable.MarkLinkAsUnidirectional (neighbor, blacklistTimeout);
+}
+
+void
+RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv)
+{
+  NS_LOG_FUNCTION (this);
+  NS_LOG_UNCOND("Spectrum Manager at AODV updated");
+  m_specManager_aodv = specManager_aodv;
+  m_specManager_aodv->IsChannelAvailable();//to be tested
+  //int tot_aval_channels = m_specManager_aodv->GetTotalFreeChannelsNow();
 }
 
 void

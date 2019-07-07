@@ -40,6 +40,7 @@
 #include "ns3/ipv4-interface.h"
 #include "ns3/ipv4-l3-protocol.h"
 #include "ns3/repository.h"
+#include "ns3/spectrum-manager.h"
 #include <map>
 
 namespace ns3
@@ -56,6 +57,8 @@ class RoutingProtocol : public Ipv4RoutingProtocol
 public:
   static TypeId GetTypeId (void);
   static const uint32_t AODV_PORT;
+  SpectrumManager *m_specManager_aodv;
+  void setSpecManager(SpectrumManager *specManager_aodv);
 
   /// c-tor
   RoutingProtocol ();
