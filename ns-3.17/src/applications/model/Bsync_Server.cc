@@ -78,7 +78,11 @@ void Conflict_G_Loc::calc_node_t()
   double* array_node_wt = new double [no_su];
   for (int i=0;i<no_su;i++)
   {
-	  int tot_aval_channels = m_specManager->GetTotalFreeChannelsNow();
+	  std::vector<int> free_channels = m_specManager->GetListofFreeChannels();
+	  int tot_aval_channels = free_channels.size();
+	  for(int n : free_channels)
+		  std::cout << n << '\n';
+	  //int tot_aval_channels = m_specManager->GetTotalFreeChannelsNow();
 	  array_node_wt[i]= (double) 1/tot_aval_channels;
 	  NS_LOG_INFO(array_node_wt[i]);
   }
@@ -236,7 +240,7 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
   if (!isSMupdated)
   {
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Server::startCG, this);
-	  m_SetSpecAODVCallback(m_spectrumManager);
+	  m_SetSpecAODVCallback(m_spectrumManager, m_free_channels_list);
   }
 
 }
@@ -361,7 +365,12 @@ void Bsync_Server::startCG()
 {
   NS_LOG_FUNCTION (this);
   //ConflictG = Conflict_G_Loc(3, 2);
-  int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
+  m_free_channels_list = m_spectrumManager->GetListofFreeChannels();
+  int tot_free_channels = m_free_channels_list.size();
+  m_SetSpecAODVCallback(m_spectrumManager, m_free_channels_list);
+  //for(int n : free_channels)
+	  //std::cout << n << '\n';
+  //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
   if (tot_free_channels!=0)
 	  ConflictG.array_node_wt = 1/(tot_free_channels*1.0);
   NS_LOG_UNCOND(ConflictG.array_node_wt);

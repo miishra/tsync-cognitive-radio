@@ -36,6 +36,7 @@
 #include "repository.h"
 #include "ns3/regular-wifi-mac.h"
 #include "ns3/nstime.h"
+#include <vector>
 
 // Spectrum Manager modules
 // Enable/Disable channel allocation performed at MAC Layer, by the SpectrumDecision Module
@@ -143,6 +144,8 @@ public:
 	void SetRepository(Ptr<Repository> rep);
 
 	int GetTotalFreeChannelsNow();
+
+	std::vector<int> GetListofFreeChannels();
 
 private:
 

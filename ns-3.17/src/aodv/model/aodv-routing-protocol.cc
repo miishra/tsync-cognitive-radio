@@ -1357,6 +1357,15 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   if (dst == rrepHeader.GetOrigin ())
     {
 	  //NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
+	  uint8_t *buffer = new uint8_t[p->GetSize ()];
+	  p->CopyData(buffer, p->GetSize ());
+	  for (int i=0;i<p->GetSize ()/4;i++)
+	  {
+		  int temp=0;
+		  memcpy(&temp, buffer, sizeof(temp));
+		  std::cout << temp << '\n';
+	  }
+	  //m_received_free_channels_list = (std::vector<int>) buffer;
 	  Ptr<Packet> copy = p->Copy ();
 	  /*Ipv4Header iph;
 	  copy->RemoveHeader (iph);*/
@@ -1662,12 +1671,16 @@ RoutingProtocol::AckTimerExpire (Ipv4Address neighbor, Time blacklistTimeout)
 }
 
 void
-RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv)
+RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, std::vector<int> free_channels_list)
 {
   NS_LOG_FUNCTION (this);
-  NS_LOG_UNCOND("Spectrum Manager at AODV updated");
+  //NS_LOG_UNCOND("Spectrum Manager at AODV updated");
   m_specManager_aodv = specManager_aodv;
-  m_specManager_aodv->IsChannelAvailable();//to be tested
+  m_free_channels_list = free_channels_list;
+  //for(int n : free_channels_list)
+  	  //std::cout << n << '\n';
+  //std::vector<int> free_channels = m_specManager_aodv->GetListofFreeChannels();
+  //m_specManager_aodv->IsChannelAvailable();//to be tested
   //int tot_aval_channels = m_specManager_aodv->GetTotalFreeChannelsNow();
 }
 
@@ -1688,7 +1701,9 @@ RoutingProtocol::SendHello ()
       RrepHeader helloHeader (/*prefix size=*/ 0, /*hops=*/ 0, /*dst=*/ iface.GetLocal (), /*dst seqno=*/ m_seqNo,
                                                /*origin=*/ iface.GetLocal (),/*lifetime=*/ Time (AllowedHelloLoss * HelloInterval),
                                                m_crRepository->GetRxChannel(m_ipv4->GetObject <Node>()->GetId()));
-      Ptr<Packet> packet = Create<Packet> ();
+      uint8_t *buffer = new uint8_t[sizeof(m_free_channels_list)];
+      memcpy((char*) buffer, &m_free_channels_list, sizeof(m_free_channels_list));
+      Ptr<Packet> packet = Create<Packet> (buffer, sizeof(m_free_channels_list));//hello packet changed
       packet->AddHeader (helloHeader);
       TypeHeader tHeader (AODVTYPE_RREP);
       packet->AddHeader (tHeader);

@@ -58,7 +58,9 @@ public:
   static TypeId GetTypeId (void);
   static const uint32_t AODV_PORT;
   SpectrumManager *m_specManager_aodv;
-  void setSpecManager(SpectrumManager *specManager_aodv);
+  void setSpecManager(SpectrumManager *specManager_aodv, std::vector<int> free_channels_list);
+  std::vector<int> m_free_channels_list;
+  std::vector<int> m_received_free_channels_list;
 
   /// c-tor
   RoutingProtocol ();
