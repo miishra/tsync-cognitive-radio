@@ -185,9 +185,15 @@ Bsync_Server::Bsync_Server ()
   ref_flag=0;
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
-  received_neighbour_channel_availability = new bool*[2];
-  for(int i = 0; i < 2; ++i)
-	  received_neighbour_channel_availability[i] = new bool[11];
+  received_neighbour_channel_availability = new bool*[4]();
+  for(int i = 0; i < 4; ++i)
+	  received_neighbour_channel_availability[i] = new bool[11]();
+
+  sent_neighbour_channel_availability = new bool*[4]();
+  for(int i = 0; i < 4; ++i)
+	  sent_neighbour_channel_availability[i] = new bool[11]();
+
+  tot_su=4;
   //cout << internal_timer << endl;
 }
 
@@ -243,7 +249,7 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
   if (!isSMupdated)
   {
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Server::startCG, this);
-	  m_SetSpecAODVCallback(m_spectrumManager, m_free_channels_list);
+	  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, tot_su);
   }
 
 }
@@ -370,7 +376,11 @@ void Bsync_Server::startCG()
   //ConflictG = Conflict_G_Loc(3, 2);
   m_free_channels_list = m_spectrumManager->GetListofFreeChannels();
   int tot_free_channels = m_free_channels_list.size();
-  m_SetSpecAODVCallback(m_spectrumManager, m_free_channels_list);
+  for(int i = 0; i < tot_free_channels; i++)
+  {
+	  sent_neighbour_channel_availability[this->GetNode()->GetId()][m_free_channels_list[i]]=true;
+  }
+  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, tot_su);
   //for(int n : free_channels)
 	  //std::cout << n << '\n';
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
