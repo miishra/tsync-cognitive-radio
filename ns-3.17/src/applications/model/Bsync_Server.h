@@ -32,6 +32,7 @@ public:
   SpectrumManager * m_spectrumManager;
   std::map<Ipv4Address, int> ip_nodeid_hash;
   std::vector<int> m_free_channels_list;
+  bool **received_neighbour_channel_availability;
   void startCG();
 
 protected:

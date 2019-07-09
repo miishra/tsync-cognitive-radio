@@ -61,6 +61,7 @@ public:
   void setSpecManager(SpectrumManager *specManager_aodv, std::vector<int> free_channels_list);
   std::vector<int> m_free_channels_list;
   std::vector<int> m_received_free_channels_list;
+  bool *m_received_channel_availability;
 
   /// c-tor
   RoutingProtocol ();

@@ -155,6 +155,7 @@ RoutingProtocol::RoutingProtocol () :
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
+  m_received_channel_availability = new bool[11]();
 }
 
 TypeId
@@ -1359,12 +1360,12 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  //NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
 	  uint8_t *buffer = new uint8_t[p->GetSize ()];
 	  p->CopyData(buffer, p->GetSize ());
-	  for (int i=0;i<p->GetSize ()/4;i++)
+	  /*for (int i=0;i<p->GetSize ()/4;i++)
 	  {
 		  int temp=0;
 		  memcpy(&temp, buffer, sizeof(temp));
 		  std::cout << temp << '\n';
-	  }
+	  }*/
 	  //m_received_free_channels_list = (std::vector<int>) buffer;
 	  Ptr<Packet> copy = p->Copy ();
 	  /*Ipv4Header iph;

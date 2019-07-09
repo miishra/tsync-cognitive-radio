@@ -185,6 +185,9 @@ Bsync_Server::Bsync_Server ()
   ref_flag=0;
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
+  received_neighbour_channel_availability = new bool*[2];
+  for(int i = 0; i < 2; ++i)
+	  received_neighbour_channel_availability[i] = new bool[11];
   //cout << internal_timer << endl;
 }
 
