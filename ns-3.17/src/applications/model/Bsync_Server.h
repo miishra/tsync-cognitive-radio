@@ -54,7 +54,7 @@ private:
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<SpectrumManager *, bool *> m_SetSpecAODVCallback;
   TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback;
-  void ReceivedNeighbourSNR(Ipv4Address source, int node_id);
+  void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array);
   void GetRoutingTable();
 
   uint16_t m_port;

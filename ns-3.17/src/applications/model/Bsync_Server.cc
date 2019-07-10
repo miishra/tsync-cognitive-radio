@@ -146,6 +146,26 @@ void Conflict_G_Loc::conflict(Ptr<Node> current_node)
   }
 }
 
+void Conflict_G_Loc::color_conflict()
+{
+  NS_LOG_FUNCTION (this);
+  std::vector<int> available_colors;
+  for (int i=0;i<no_su;i++)
+  {
+	  if (i!=0)//this->GetNode()->GetId()
+	  {
+		  for (int j=0;j<11;j++)
+		  	  {
+		  		  if (ConnectedNodeStatus[i]=true)
+		  		  {
+		  			  if (received_neighbour_channel_availability[i][j]==sent_neighbour_channel_availability[j])
+		  				  available_colors.push_back(j);
+		  		  }
+		  	  }
+	  }
+  }
+}
+
 TypeId
 Bsync_Server::GetTypeId (void)
 {
@@ -215,7 +235,12 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 		packet->CopyData(buffer, 11);
 		if (ptpt.sending_node_id!=-1)
 		{
-			memcpy(&received_neighbour_channel_availability[ptpt.sending_node_id], buffer, 11);
+			//memcpy(&received_neighbour_channel_availability[ptpt.sending_node_id], buffer, 11);
+			/*for(int j=0;j<11;j++)
+				received_neighbour_channel_availability[ptpt.sending_node_id][j] = (bool)buffer[j];*/
+			/*std::cout << "Sent by node: " << ptpt.sending_node_id << " to Node: " << this->GetNode()->GetId() << std::endl;
+			for(int j=0;j<11;j++)
+				std::cout << received_neighbour_channel_availability[ptpt.sending_node_id][j] << std::endl;*/
 			//for(int j=0;j<11;j++)
 				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
@@ -255,13 +280,18 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
 
 }
 
-void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id)
+void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array)
 {
 	NS_LOG_FUNCTION (this);
-
 	//std::cout << this->GetNode()->GetId() <<  endl;
 	ip_nodeid_hash[source] = node_id;
 	ConflictG.conflict(this->GetNode());
+	received_neighbour_channel_availability = received_status_array;
+	/*for(int j=0;j<11;j++)
+	{
+		if (received_neighbour_channel_availability)
+			NS_LOG_UNCOND(received_neighbour_channel_availability[1][j]);
+	}*/
 	//NS_LOG_INFO (source << "\t" << node_id);
 }
 

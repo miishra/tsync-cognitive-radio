@@ -1364,13 +1364,10 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  //NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
 	  uint8_t *buffer = new uint8_t[p->GetSize ()];
 	  p->CopyData(buffer, p->GetSize ());
-	  memcpy(&m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()], buffer, 11);
+	  for(int j=0;j<11;j++)
+		  m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()][j] = (bool)buffer[j];
+	  //memcpy(&m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()], buffer, 11);
 	  //std::cout << p->GetSize() << std::endl;
-	  /*for(int j=0;j<11;j++)
-	  {
-		  if (m_received_channel_availability)
-			  NS_LOG_UNCOND(m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()][j]);
-	  }*/
 	  /*for (int i=0;i<p->GetSize ()/4;i++)
 	  {
 		  int temp=0;
@@ -1387,7 +1384,10 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  bool foundpc = p->PeekPacketTag(pcpt);
 	  //NS_LOG_UNCOND("Got Hello Packet from: "  << rrepHeader.GetOrigin () << " of type: " << ptpt.Get() << " channel number: " << rrepHeader.GetRXChannel() << "[node " << m_ipv4->GetObject<Node> ()->GetId () << "] ");
 	  int helloseqno=1;
-	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), ptpt.sending_node_id);
+	  //std::cout << "Sent by node: " << ptpt.sending_node_id << " to Node: " << m_ipv4->GetObject <Node>()->GetId() << std::endl;
+	  /*for(int j=0;j<11;j++)
+		  NS_LOG_UNCOND(m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()][j]);*/
+	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability);
       ProcessHello (rrepHeader, receiver);
       return;
     }
