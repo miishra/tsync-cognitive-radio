@@ -157,11 +157,9 @@ RoutingProtocol::RoutingProtocol () :
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
   m_received_channel_availability = new bool*[4];
   for(int i = 0; i < 4; ++i)
-	  m_received_channel_availability[i] = new bool[11];
+	  m_received_channel_availability[i] = new bool[11]();
 
-  m_sent_channel_availability = new bool*[4];
-  for(int i = 0; i < 4; ++i)
-	  m_sent_channel_availability[i] = new bool[11];
+  m_sent_channel_availability = new bool[11]();
 }
 
 TypeId
@@ -1366,16 +1364,13 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  //NS_LOG_UNCOND("HelloReceiveCallback has been invoked");
 	  uint8_t *buffer = new uint8_t[p->GetSize ()];
 	  p->CopyData(buffer, p->GetSize ());
-	  memcpy(&m_received_channel_availability, buffer, sizeof(m_received_channel_availability));
+	  memcpy(&m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()], buffer, 11);
 	  //std::cout << p->GetSize() << std::endl;
-	  /*for(int i=0;i<4;i++)
-	    {
-	  	  for(int j=0;i<11;j++)
-	  	  {
-	  		  if (m_received_channel_availability)
-	  			  //NS_LOG_UNCOND(m_sent_channel_availability[i][j]);
-	  	  }
-	    }*/
+	  /*for(int j=0;j<11;j++)
+	  {
+		  if (m_received_channel_availability)
+			  NS_LOG_UNCOND(m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()][j]);
+	  }*/
 	  /*for (int i=0;i<p->GetSize ()/4;i++)
 	  {
 		  int temp=0;
@@ -1688,7 +1683,7 @@ RoutingProtocol::AckTimerExpire (Ipv4Address neighbor, Time blacklistTimeout)
 }
 
 void
-RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool** free_channels_sent_list)
+RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool* free_channels_sent_list)
 {
   NS_LOG_FUNCTION (this);
   //NS_LOG_UNCOND("Spectrum Manager at AODV updated");
@@ -1697,7 +1692,7 @@ RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool** free_c
   //std::cout << sizeof(m_sent_channel_availability) << std::endl;
   /*for(int i=0;i<4;i++)
   {
-	  for(int j=0;i<11;j++)
+	  for(int j=0;j<11;j++)
 	  {
 		  if (m_sent_channel_availability)
 			  NS_LOG_UNCOND(m_sent_channel_availability[i][j]);
@@ -1727,9 +1722,10 @@ RoutingProtocol::SendHello ()
       RrepHeader helloHeader (/*prefix size=*/ 0, /*hops=*/ 0, /*dst=*/ iface.GetLocal (), /*dst seqno=*/ m_seqNo,
                                                /*origin=*/ iface.GetLocal (),/*lifetime=*/ Time (AllowedHelloLoss * HelloInterval),
                                                m_crRepository->GetRxChannel(m_ipv4->GetObject <Node>()->GetId()));
-      uint8_t *buffer = new uint8_t[sizeof(m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()])];//seeoff
-      memcpy((char*) buffer, &m_sent_channel_availability, sizeof(m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()]));
-      Ptr<Packet> packet = Create<Packet> (buffer, sizeof(m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()]));//hello packet changed
+      //std::cout << sizeof(m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()]) << std::endl;
+      uint8_t *buffer = new uint8_t[11];//seeoff
+      memcpy((char*) buffer, &m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()], 11);
+      Ptr<Packet> packet = Create<Packet> (buffer, 11);//hello packet changed
       packet->AddHeader (helloHeader);
       TypeHeader tHeader (AODVTYPE_RREP);
       packet->AddHeader (tHeader);

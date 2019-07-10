@@ -189,11 +189,7 @@ Bsync_Server::Bsync_Server ()
   for(int i = 0; i < 4; ++i)
 	  received_neighbour_channel_availability[i] = new bool[11]();
 
-  sent_neighbour_channel_availability = new bool*[4]();
-  for(int i = 0; i < 4; ++i)
-	  sent_neighbour_channel_availability[i] = new bool[11]();
-
-  tot_su=4;
+  sent_neighbour_channel_availability = new bool[11]();
   //cout << internal_timer << endl;
 }
 
@@ -215,8 +211,13 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 		//Ipv4Header iph;
 		//copy->RemoveHeader (iph);
 		double snrval = 10*log10(pow(10,(signalDbm-30)/10)/pow(10,(noiseDbm-30)/10));
+		uint8_t *buffer = new uint8_t[11];
+		packet->CopyData(buffer, 11);
 		if (ptpt.sending_node_id!=-1)
 		{
+			memcpy(&received_neighbour_channel_availability[ptpt.sending_node_id], buffer, 11);
+			//for(int j=0;j<11;j++)
+				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
 			ConnectedNodeStatus[ptpt.sending_node_id]=true;
 			ConflictG.link_co(ptpt.sending_node_id, snrval);
@@ -249,7 +250,7 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
   if (!isSMupdated)
   {
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Server::startCG, this);
-	  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, tot_su);
+	  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability);
   }
 
 }
@@ -378,9 +379,9 @@ void Bsync_Server::startCG()
   int tot_free_channels = m_free_channels_list.size();
   for(int i = 0; i < tot_free_channels; i++)
   {
-	  sent_neighbour_channel_availability[this->GetNode()->GetId()][m_free_channels_list[i]]=true;
+	  sent_neighbour_channel_availability[m_free_channels_list[i]]=true;
   }
-  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, tot_su);
+  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability);
   //for(int n : free_channels)
 	  //std::cout << n << '\n';
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();

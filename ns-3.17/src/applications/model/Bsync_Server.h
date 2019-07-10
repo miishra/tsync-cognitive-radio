@@ -33,7 +33,7 @@ public:
   std::map<Ipv4Address, int> ip_nodeid_hash;
   std::vector<int> m_free_channels_list;
   bool **received_neighbour_channel_availability;
-  bool **sent_neighbour_channel_availability;
+  bool *sent_neighbour_channel_availability;
   void startCG();
 
 protected:
@@ -52,7 +52,7 @@ private:
   void transmitasONF(Ptr<Socket> socket);
   void MyFunction(SpectrumManager * sm);
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
-  TracedCallback<SpectrumManager *, bool **, int> m_SetSpecAODVCallback;
+  TracedCallback<SpectrumManager *, bool *> m_SetSpecAODVCallback;
   TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback;
   void ReceivedNeighbourSNR(Ipv4Address source, int node_id);
   void GetRoutingTable();
