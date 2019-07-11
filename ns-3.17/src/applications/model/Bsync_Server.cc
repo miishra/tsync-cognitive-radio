@@ -48,6 +48,7 @@ NS_LOG_COMPONENT_DEFINE ("Bsync_ServerApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Server);
 
 Conflict_G_Loc ConflictG(3,2);
+int m_self_node_id=0;
 bool *ConnectedNodeStatus;
 
 Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
@@ -152,7 +153,7 @@ void Conflict_G_Loc::color_conflict()
   std::vector<int> available_colors;
   for (int i=0;i<no_su;i++)
   {
-	  if (i!=0)//this->GetNode()->GetId()
+	  if (i!=m_self_node_id)//this->GetNode()->GetId()
 	  {
 		  for (int j=0;j<11;j++)
 		  	  {
@@ -280,7 +281,7 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
 
 }
 
-void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array)
+void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** received_status_array)
 {
 	NS_LOG_FUNCTION (this);
 	//std::cout << this->GetNode()->GetId() <<  endl;
@@ -299,6 +300,7 @@ void
 Bsync_Server::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+  m_self_node_id=this->GetNode()->GetId();
   Ptr<Ipv4> ipv4 = this->GetNode()->GetObject<Ipv4> ();
   Ipv4InterfaceAddress iaddr = ipv4->GetAddress (1,0);
   ip_nodeid_hash[iaddr.GetLocal()] = this->GetNode()->GetId();
