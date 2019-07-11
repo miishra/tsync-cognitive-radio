@@ -59,6 +59,8 @@ public:
   static const uint32_t AODV_PORT;
   SpectrumManager *m_specManager_aodv;
   void setSpecManager(SpectrumManager *specManager_aodv, bool* free_channels_sent_list);
+  void setSentColors(int* sent_allotted_colors);
+  int* sent_allotted_colors_neighbours;
   std::vector<int> m_free_channels_list;
   std::vector<int> m_received_free_channels_list;
   bool **m_received_channel_availability;
@@ -114,6 +116,9 @@ public:
   //void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<RoutingTable> m_sendRoutingTableCallback;
   TracedCallback<Ipv4Address, int, bool **> m_MyHelloReceiveCallback;
+
+  TracedCallback<RoutingTable> m_sendRoutingTableCallbackClient;
+  TracedCallback<Ipv4Address, int, bool **> m_MyHelloReceiveCallbackClient;
 
 private:
   ///\name Protocol parameters.

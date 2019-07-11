@@ -38,6 +38,7 @@
 #include "Bsync_Server.h"
 
 #include <fstream>
+#include <tuple>
 
 
 using namespace std;
@@ -58,6 +59,7 @@ Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
   no_pu=num_pu;
   ConnectedNodeStatus = new bool[num_su+num_pu]();
   current_depth=0;
+  allotted_colors = new int[num_su]();
   array_link_co= new double[num_su]();
   array_link_adj= new double[num_su]();
   array_node_wt=0;
@@ -145,24 +147,55 @@ void Conflict_G_Loc::conflict(Ptr<Node> current_node)
   		ConnectedNodeStatus[ip_nodeid_hash[Ipv4Address(dest_ip.c_str())]]=true;
   	}
   }
+  ConflictG.color_conflict();
+}
+
+bool sortbysec(const tuple<int, double> &a,
+               const tuple<int, double> &b)
+{
+    return (get<1>(a) > get<1>(b));
 }
 
 void Conflict_G_Loc::color_conflict()
 {
   NS_LOG_FUNCTION (this);
   std::vector<int> available_colors;
+  std::vector<tuple <int , double>> nodeid_status;
+
+  for(int i=0; i<no_su;i++)
+	  nodeid_status.push_back(make_tuple(i, array_link_co[i]));
+  sort(nodeid_status.begin(), nodeid_status.end(), sortbysec);
+
+  //for(int i = 0; i < nodeid_status.size(); i++)
+      //std::cout << get<0>(nodeid_status[i]) << " " << get<1>(nodeid_status[i]) << "\n";
+
   for (int i=0;i<no_su;i++)
   {
 	  if (i!=m_self_node_id)//this->GetNode()->GetId()
 	  {
 		  for (int j=0;j<11;j++)
 		  	  {
-		  		  if (ConnectedNodeStatus[i]=true)
+		  		  if (ConnectedNodeStatus[i]==true)
 		  		  {
 		  			  if (received_neighbour_channel_availability[i][j]==sent_neighbour_channel_availability[j])
 		  				  available_colors.push_back(j);
 		  		  }
 		  	  }
+	  }
+  }
+
+  for (int i=0;i<no_su;i++)
+  {
+	  if (get<0>(nodeid_status[i])!=m_self_node_id)
+	  {
+		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true)
+		  {
+			  vector<int>::iterator randIt = available_colors.begin();
+			  std::advance(randIt, std::rand() %available_colors.size());
+			  allotted_colors[get<0>(nodeid_status[i])]= *randIt;//available_colors.back()
+			  //cout << *randIt << std::endl;
+			  available_colors.erase(randIt);
+		  }
 	  }
   }
 }

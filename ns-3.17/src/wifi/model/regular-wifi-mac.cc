@@ -536,6 +536,7 @@ RegularWifiMac::RestartAccess()
 
   //NS_LOG_UNCOND("Callback has been invoked");
   m_Mycallback(m_spectrumManager);
+  m_Mycallback_Client(m_spectrumManager);
 }
 
 void
@@ -625,6 +626,8 @@ RegularWifiMac::GetTypeId (void)
                    MakeBooleanChecker ())
 	.AddTraceSource ("NewCallback"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RegularWifiMac::m_Mycallback))
+	.AddTraceSource ("NewCallbackClient"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&RegularWifiMac::m_Mycallback_Client))
     .AddAttribute ("DcaTxop", "The DcaTxop object",
                    PointerValue (),
                    MakePointerAccessor (&RegularWifiMac::GetDcaTxop),

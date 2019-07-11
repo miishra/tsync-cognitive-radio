@@ -174,8 +174,12 @@ RoutingProtocol::GetTypeId (void)
                    MakeTimeChecker ())
 	.AddTraceSource ("RoutingTableCallback"," pass routing table to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_sendRoutingTableCallback))
+    .AddTraceSource ("RoutingTableCallbackClient"," pass routing table to application ",
+				   MakeTraceSourceAccessor (&RoutingProtocol::m_sendRoutingTableCallbackClient))
 	.AddTraceSource ("HelloReceiveCallback"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallback))
+	.AddTraceSource ("HelloReceiveCallbackClient"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallbackClient))
     .AddAttribute ("RreqRetries", "Maximum number of retransmissions of RREQ to discover a route",
                    UintegerValue (2),
                    MakeUintegerAccessor (&RoutingProtocol::RreqRetries),
@@ -347,6 +351,11 @@ RoutingProtocol::Start ()
 {
   NS_LOG_FUNCTION (this);
   Config::ConnectWithoutContext ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Server/SetSpecAODVCallback", MakeCallback (&RoutingProtocol::setSpecManager, this));
+
+  Config::ConnectWithoutContext ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Client/SetSpecAODVCallbackClient", MakeCallback (&RoutingProtocol::setSpecManager, this));
+
+  Config::ConnectWithoutContext ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Client/SetAllottedColorsCallbackClient", MakeCallback (&RoutingProtocol::setSentColors, this));
+
   if (EnableHello)
     {
       m_nb.ScheduleTimer ();
@@ -1388,6 +1397,8 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  /*for(int j=0;j<11;j++)
 		  NS_LOG_UNCOND(m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()][j]);*/
 	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability);
+
+	  m_MyHelloReceiveCallbackClient(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability);
       ProcessHello (rrepHeader, receiver);
       return;
     }
@@ -1706,6 +1717,15 @@ RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool* free_ch
 }
 
 void
+RoutingProtocol::setSentColors(int* sent_allotted_colors)
+{
+  NS_LOG_FUNCTION (this);
+  sent_allotted_colors_neighbours = sent_allotted_colors;
+  /*for(int i=0;i<2;i++)
+  	  std::cout << sent_allotted_colors_neighbours[i] << std::endl;*/
+}
+
+void
 RoutingProtocol::SendHello ()
 {
   NS_LOG_FUNCTION (this);
@@ -1731,6 +1751,8 @@ RoutingProtocol::SendHello ()
       packet->AddHeader (tHeader);
       PacketTypePacketTag bt = ns3::PacketTypePacketTag(CTRL_PACKET);
       bt.set_node_id(m_ipv4->GetObject<Node> ()->GetId ());
+      int x=1;
+      bt.set_received_color(x);
       packet->AddPacketTag(bt);
       // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
       Ipv4Address destination;

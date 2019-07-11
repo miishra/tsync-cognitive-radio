@@ -14,15 +14,6 @@ namespace ns3 {
 class Socket;
 class Packet;
 
-/**
- * \ingroup applications
- * \defgroup Bsync_ Bsync_
- */
-
-/**
- * \ingroup Bsync_
- */
-
 class Bsync_Server : public Application
 {
 public:
@@ -99,6 +90,7 @@ public:
 	double* array_link_co;
 	double* array_link_adj;
 	double array_node_wt;
+	int* allotted_colors;
 	double array_net_T;
 	double opt_net_T;
 	double array_net_Intf;

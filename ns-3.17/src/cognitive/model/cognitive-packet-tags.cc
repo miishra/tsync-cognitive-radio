@@ -26,6 +26,7 @@ PacketTypePacketTag::PacketTypePacketTag (PacketType t) :
   m_type (t)
 {
 	sending_node_id=-1;
+	received_color=-1;
 }
 
 TypeId
@@ -46,13 +47,14 @@ PacketTypePacketTag::GetInstanceTypeId (void) const
 uint32_t
 PacketTypePacketTag::GetSerializedSize (void) const
 {
-  return 5;
+  return 9;
 }
 void
 PacketTypePacketTag::Serialize (TagBuffer i) const
 {
   i.WriteU8 (m_type);
   i.WriteU32 (sending_node_id);
+  i.WriteU32 (received_color);
 }
 void
 PacketTypePacketTag::set_node_id(int node_id)
@@ -60,10 +62,16 @@ PacketTypePacketTag::set_node_id(int node_id)
 	sending_node_id = node_id;
 }
 void
+PacketTypePacketTag::set_received_color(int received_node_color)
+{
+	received_color = received_node_color;
+}
+void
 PacketTypePacketTag::Deserialize (TagBuffer i)
 {
   m_type = (PacketType) i.ReadU8 ();
   sending_node_id = (int) i.ReadU32 ();
+  received_color = (int) i.ReadU32 ();
 }
 
 void

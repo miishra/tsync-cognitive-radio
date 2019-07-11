@@ -1,21 +1,216 @@
 #include "ns3/log.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/ipv6-address.h"
+#include "ns3/address-utils.h"
 #include "ns3/nstime.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
 #include "ns3/socket.h"
+#include "ns3/udp-socket.h"
 #include "ns3/simulator.h"
 #include "ns3/socket-factory.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
-#include "ns3/trace-source-accessor.h"
+#include "ns3/core-module.h"
+#include "ns3/network-module.h"
+#include "ns3/internet-module.h"
+#include "ns3/wifi-module.h"
+#include <string>       // std::string
+#include <iostream>     // std::cout
+#include <sstream>      // std::ostringstream
+
+#include <iomanip>
+#include "ns3/command-line.h"
+#include "ns3/config.h"
+#include "ns3/string.h"
+#include "ns3/yans-wifi-helper.h"	`
+#include "ns3/packet-sink.h"
+#include "ns3/yans-wifi-channel.h"
+#include "ns3/multi-model-spectrum-channel.h"
+#include "ns3/propagation-loss-model.h"
+#include "ns3/waveform-generator.h"
+#include "ns3/waveform-generator-helper.h"
+#include "ns3/non-communicating-net-device.h"
+#include "ns3/wifi-net-device.h"
+
+#include "ns3/aodv-module.h"
+
 #include "Bsync_Client.h"
+
+#include <fstream>
+#include <tuple>
+
+using namespace std;
 
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("Bsync_ClientApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Client);
+
+Conflict_G_Loc_Client ConflictGC(3,2);
+int m_self_node_id_client=0;
+bool *ConnectedNodeStatus_Client;
+int* allotted_colors;
+
+Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
+{
+  NS_LOG_FUNCTION (this);
+  no_su=num_su;
+  no_pu=num_pu;
+  ConnectedNodeStatus_Client = new bool[num_su+num_pu]();
+  current_depth=0;
+  allotted_colors = new int[num_su]();
+  array_link_co= new double[num_su]();
+  array_link_adj= new double[num_su]();
+  array_node_wt=0;
+  array_net_T=0;
+  opt_net_T=0;
+  array_net_Intf=0;
+  opt_net_Intf=0;
+  m_specManager=Bsync_Client::m_spectrumManager;
+}
+
+/*TypeId
+Conflict_G_Loc_Client::GetTypeId (void)
+{
+  static TypeId tid = TypeId ("ns3::Conflict_G_Loc_Client")
+    .SetParent<Application> ()
+    //.AddConstructor<Conflict_G_Loc_Client(int num_su, int num_pu)> ()
+	.AddTraceSource ("SetAllottedColorsCallbackClient"," pass parameters to AODV ",
+				   MakeTraceSourceAccessor (&Conflict_G_Loc_Client::m_SetAllottedColorsCallback_Client))
+  ;
+  return tid;
+}*/
+
+Conflict_G_Loc_Client::~Conflict_G_Loc_Client ()
+{
+  NS_LOG_FUNCTION (this);
+}
+
+void Conflict_G_Loc_Client::calc_node_t()
+{
+  NS_LOG_FUNCTION (this);
+  double* array_node_wt = new double [no_su];
+  for (int i=0;i<no_su;i++)
+  {
+	  std::vector<int> free_channels = m_specManager->GetListofFreeChannels();
+	  int tot_aval_channels = free_channels.size();
+	  for(int n : free_channels)
+		  std::cout << n << '\n';
+	  //int tot_aval_channels = m_specManager->GetTotalFreeChannelsNow();
+	  array_node_wt[i]= (double) 1/tot_aval_channels;
+	  NS_LOG_INFO(array_node_wt[i]);
+  }
+  //m_specManager->IsChannelAvailable();
+  //NS_LOG_INFO(m_specManager->m_repository->m_count);
+}
+
+void Conflict_G_Loc_Client::link_co(int node_id, double snrval)
+{
+  NS_LOG_FUNCTION (this);
+  array_link_co[node_id]=1/snrval;
+
+  /*for (int j=0;j<no_su;j++)
+    	  cout << array_link_co[j] << "\t";
+  cout << endl;*/
+}
+
+void Conflict_G_Loc_Client::conflict(Ptr<Node> current_node)
+{
+  NS_LOG_FUNCTION (this);
+
+  Ipv4GlobalRoutingHelper g;
+  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (to_string(current_node->GetId()) + "dynamic-global-routing-client.routes", std::ios::out);
+  g.PrintRoutingTableAt (Seconds (0.0), current_node, routingStream);
+
+  std::ifstream infile(to_string(current_node->GetId()) + "dynamic-global-routing-client.routes");
+
+  std::string line;
+  int current_node_id=-1, line_count=1, hop_count;
+  std::string dest_ip, link_status, gen_string, delim="\t";
+  while (std::getline(infile, line))
+  {
+  	std::istringstream iss(line);
+  	/*if (!(iss >> gen_string))
+  	{
+  		break;
+  	}*/
+  	//std::cout << line << endl;
+  	if (line_count>3)
+  	{
+  		size_t pos = 0;
+  		std::string token;
+  		int place=1;
+  		while ((pos = line.find(delim)) != std::string::npos) {
+  		    token = line.substr(0, pos);
+  		    if (place==1)
+  		    	dest_ip.assign(token);
+  		    else if (place==4)
+  		    	link_status.assign(token);
+  		    else if (place==6)
+  		    	hop_count=stoi(token);
+  		    line.erase(0, pos + delim.length());
+  		    place++;
+  		}
+  	}
+  	line_count++;
+  	if (link_status.compare("UP")==0 && hop_count==1)
+  	{
+  		ConnectedNodeStatus_Client[ip_nodeid_hash[Ipv4Address(dest_ip.c_str())]]=true;
+  	}
+  }
+  ConflictGC.color_conflict();
+}
+
+bool sortbysecond(const tuple<int, double> &a,
+               const tuple<int, double> &b)
+{
+    return (get<1>(a) > get<1>(b));
+}
+
+void Conflict_G_Loc_Client::color_conflict()
+{
+  NS_LOG_FUNCTION (this);
+  std::vector<int> available_colors;
+  std::vector<tuple <int , double>> nodeid_status;
+
+  for(int i=0; i<no_su;i++)
+	  nodeid_status.push_back(make_tuple(i, array_link_co[i]));
+  sort(nodeid_status.begin(), nodeid_status.end(), sortbysecond);
+
+  //for(int i = 0; i < nodeid_status.size(); i++)
+      //std::cout << get<0>(nodeid_status[i]) << " " << get<1>(nodeid_status[i]) << "\n";
+
+  for (int i=0;i<no_su;i++)
+  {
+	  if (i!=m_self_node_id_client)//this->GetNode()->GetId()
+	  {
+		  for (int j=0;j<11;j++)
+		  	  {
+		  		  if (ConnectedNodeStatus_Client[i]==true)
+		  		  {
+		  			  if (received_neighbour_channel_availability[i][j]==sent_neighbour_channel_availability[j])
+		  				  available_colors.push_back(j);
+		  		  }
+		  	  }
+	  }
+  }
+
+  for (int i=0;i<no_su;i++)
+  {
+	  if (get<0>(nodeid_status[i])!=m_self_node_id_client)
+	  {
+		  if (ConnectedNodeStatus_Client[get<0>(nodeid_status[i])]==true)
+		  {
+			  vector<int>::iterator randIt = available_colors.begin();
+			  std::advance(randIt, std::rand() %available_colors.size());
+			  allotted_colors[get<0>(nodeid_status[i])]= *randIt;//available_colors.back()
+			  //cout << *randIt << std::endl;
+			  available_colors.erase(randIt);
+		  }
+	  }
+  }
+}
 
 TypeId
 Bsync_Client::GetTypeId (void)
@@ -49,7 +244,11 @@ Bsync_Client::GetTypeId (void)
                                          &Bsync_Client::GetDataSize),
                    MakeUintegerChecker<uint32_t> ())
     .AddTraceSource ("Tx", "A new packet is created and is sent",
-                     MakeTraceSourceAccessor (&Bsync_Client::m_txTrace))
+                   MakeTraceSourceAccessor (&Bsync_Client::m_txTrace))
+	.AddTraceSource ("SetSpecAODVCallbackClient"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&Bsync_Client::m_SetSpecAODVCallback_Client))
+	.AddTraceSource ("SetAllottedColorsCallbackClient"," pass parameters to AODV ",
+				   MakeTraceSourceAccessor (&Bsync_Client::m_SetAllottedColorsCallback_Client))
   ;
   return tid;
 }
@@ -67,6 +266,57 @@ Bsync_Client::Bsync_Client ()
   period=1;
   m_period_count=1;
   stop_time=20.0;
+
+  ref_node_id=-1;
+  last_internal_timer_val=0;
+  last_internal_timer_update=0;
+  ref_flag=0;
+  isSMupdated = false;
+  tot_packet_sniffed_rx=0;
+  received_neighbour_channel_availability = new bool*[4]();
+  for(int i = 0; i < 4; ++i)
+	  received_neighbour_channel_availability[i] = new bool[11]();
+
+  sent_neighbour_channel_availability = new bool[11]();
+}
+
+void Bsync_Client::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm)
+{
+	//NS_LOG_FUNCTION (this);
+	if (packet)
+	{
+		tot_packet_sniffed_rx++;
+		Ptr<Packet> copy = packet->Copy ();
+		//RrepHeader rrepHeader;
+		//WifiMacHeader mh;//Ipv4Header
+		//copy->RemoveHeader (mh);
+		PacketTypePacketTag ptpt;
+		PacketChannelPacketTag pcpt;
+		bool foundpt = packet->PeekPacketTag(ptpt);
+		bool foundpc = packet->PeekPacketTag(pcpt);
+		//ptpt.Print(std::cout);
+		//Ipv4Header iph;
+		//copy->RemoveHeader (iph);
+		double snrval = 10*log10(pow(10,(signalDbm-30)/10)/pow(10,(noiseDbm-30)/10));
+		uint8_t *buffer = new uint8_t[11];
+		packet->CopyData(buffer, 11);
+		if (ptpt.sending_node_id!=-1)
+		{
+			//memcpy(&received_neighbour_channel_availability[ptpt.sending_node_id], buffer, 11);
+			/*for(int j=0;j<11;j++)
+				received_neighbour_channel_availability[ptpt.sending_node_id][j] = (bool)buffer[j];*/
+			/*std::cout << "Sent by node: " << ptpt.sending_node_id << " to Node: " << this->GetNode()->GetId() << std::endl;
+			for(int j=0;j<11;j++)
+				std::cout << received_neighbour_channel_availability[ptpt.sending_node_id][j] << std::endl;*/
+			//for(int j=0;j<11;j++)
+				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
+			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
+			ConnectedNodeStatus_Client[ptpt.sending_node_id]=true;
+			ConflictGC.link_co(ptpt.sending_node_id, snrval);
+		}
+		//TypeHeader tHeader (AODVTYPE_RREQ);
+		//packet->RemoveHeader(tHeader);
+	}
 }
 
 Bsync_Client::~Bsync_Client()
@@ -111,9 +361,55 @@ Bsync_Client::DoDispose (void)
 }
 
 void
+Bsync_Client::MyFunction(SpectrumManager * sm)
+{
+  NS_LOG_FUNCTION (this);
+  m_spectrumManager=sm;
+
+  if (!isSMupdated)
+  {
+	  Simulator::Schedule (Seconds (0.5), &Bsync_Client::startCG, this);
+	  m_SetSpecAODVCallback_Client(m_spectrumManager, sent_neighbour_channel_availability);
+  }
+
+}
+
+void Bsync_Client::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** received_status_array)
+{
+	NS_LOG_FUNCTION (this);
+	//std::cout << this->GetNode()->GetId() <<  endl;
+	ip_nodeid_hash[source] = node_id;
+	ConflictGC.conflict(this->GetNode());
+	m_SetAllottedColorsCallback_Client(allotted_colors);
+	received_neighbour_channel_availability = received_status_array;
+	/*for(int j=0;j<11;j++)
+	{
+		if (received_neighbour_channel_availability)
+			NS_LOG_UNCOND(received_neighbour_channel_availability[1][j]);
+	}*/
+	//NS_LOG_INFO (source << "\t" << node_id);
+}
+
+void
 Bsync_Client::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+  m_self_node_id_client=this->GetNode()->GetId();
+  Ptr<Ipv4> ipv4 = this->GetNode()->GetObject<Ipv4> ();
+  Ipv4InterfaceAddress iaddr = ipv4->GetAddress (1,0);
+  ip_nodeid_hash[iaddr.GetLocal()] = this->GetNode()->GetId();
+  //CG.conflict();
+  //m_spectrumManager->IsChannelAvailable();
+  std::ostringstream oss;
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/DeviceList/" << "*" << "/$ns3::WifiNetDevice/Mac/$ns3::RegularWifiMac/NewCallbackClient";
+  Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Client::MyFunction,this));
+
+  Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&Bsync_Client::MonitorSniffRxCall, this));
+
+  oss.str("");
+  oss.clear();
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/HelloReceiveCallback";
+  Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Client::ReceivedNeighbourSNR,this));
 
   if (m_socket == 0)
     {
@@ -269,6 +565,51 @@ Bsync_Client::ScheduleCommands (Time dt)
 {
   NS_LOG_FUNCTION (this << dt);
   m_ControlEvent = Simulator::Schedule (Seconds (0.), &Bsync_Client::Client_Bsync_Logic, this);
+}
+
+double Bsync_Client::f_simple(double x)
+{
+  NS_LOG_FUNCTION (this);
+  return log(x);
+}
+
+double Bsync_Client::f_inver(double x)
+{
+  NS_LOG_FUNCTION (this);
+  return exp(x);
+}
+
+double Bsync_Client::increment_decrement(double x, double y)
+{
+  NS_LOG_FUNCTION (this);
+  /*double e = 0.5;
+  double var1, var2;
+
+  var1 = (f_simple(x) + e);
+  var2 = f_inver(var1);//doubt8*/
+  double epsilon = 0.1;
+
+  return x+epsilon;
+}
+
+void Bsync_Client::startCG()
+{
+  NS_LOG_FUNCTION (this);
+  //ConflictG = Conflict_G_Loc(3, 2);
+  m_free_channels_list = m_spectrumManager->GetListofFreeChannels();
+  int tot_free_channels = m_free_channels_list.size();
+  for(int i = 0; i < tot_free_channels; i++)
+  {
+	  sent_neighbour_channel_availability[m_free_channels_list[i]]=true;
+  }
+  m_SetSpecAODVCallback_Client(m_spectrumManager, sent_neighbour_channel_availability);
+  //for(int n : free_channels)
+	  //std::cout << n << '\n';
+  //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
+  if (tot_free_channels!=0)
+	  ConflictGC.array_node_wt = 1/(tot_free_channels*1.0);
+  NS_LOG_UNCOND(ConflictGC.array_node_wt);
+  isSMupdated = true;
 }
 
 void

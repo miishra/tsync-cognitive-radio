@@ -47,7 +47,9 @@ public:
   void Set (PacketType m_type);
   PacketType Get () const { return m_type; }
   void set_node_id(int node_id);
+  void set_received_color(int received_node_color);
   int sending_node_id;
+  int received_color;
 
 private:
   PacketType m_type;
