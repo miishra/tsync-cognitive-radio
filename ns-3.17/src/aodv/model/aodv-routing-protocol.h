@@ -59,8 +59,9 @@ public:
   static const uint32_t AODV_PORT;
   SpectrumManager *m_specManager_aodv;
   void setSpecManager(SpectrumManager *specManager_aodv, bool* free_channels_sent_list);
-  void setSentColors(int* sent_allotted_colors, int no_su);
-  int* sent_CAT_neighbours;//Channel Assignment Table
+  void setSentColors(uint8_t* sent_allotted_colors, int no_su);
+  uint8_t* sent_CAT_neighbours;//Channel Assignment Table Sent
+  uint8_t* received_CAT_neighbours;//Channel Assignment Table Received
   int num_su;
   std::vector<int> m_free_channels_list;
   std::vector<int> m_received_free_channels_list;

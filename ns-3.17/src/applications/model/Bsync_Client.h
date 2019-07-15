@@ -37,7 +37,7 @@ public:
   void SetFill (uint8_t fill, uint32_t dataSize);
   void SetFill (uint8_t *fill, uint32_t fillSize, uint32_t dataSize);
 
-  TracedCallback<int*, int> m_SetAllottedColorsCallback_Client;
+  TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Client;
 
 protected:
   virtual void DoDispose (void);

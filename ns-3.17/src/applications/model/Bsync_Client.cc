@@ -50,7 +50,7 @@ NS_OBJECT_ENSURE_REGISTERED (Bsync_Client);
 Conflict_G_Loc_Client ConflictGC(10,2);
 int m_self_node_id_client=0;
 bool *ConnectedNodeStatus_Client;
-int* client_CAT;
+uint8_t* client_CAT;
 
 int current_client_receive_color;
 int current_client_send_color;
@@ -62,7 +62,7 @@ Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
   no_pu=num_pu;
   ConnectedNodeStatus_Client = new bool[num_su+num_pu]();
   current_depth=0;
-  client_CAT = new int[num_su]();
+  client_CAT = new uint8_t[num_su]();
   array_link_co= new double[num_su]();
   array_link_adj= new double[num_su]();
   array_node_wt=0;
@@ -191,8 +191,8 @@ void Conflict_G_Loc_Client::color_conflict()
   NS_LOG_FUNCTION (this);
   std::vector<int> available_colors;
   std::vector<tuple <int , double>> nodeid_status;
-  //for(int i=0;i<no_su;i++)
-	  //client_CAT[i]=-1;
+  for(int i=0;i<no_su;i++)
+	  client_CAT[i]=250;
 
   for(int i=0; i<no_su;i++)
 	  nodeid_status.push_back(make_tuple(i, array_link_co[i]));
@@ -224,7 +224,7 @@ void Conflict_G_Loc_Client::color_conflict()
 		  {
 			  vector<int>::iterator randIt = available_colors.begin();
 			  std::advance(randIt, std::rand() %available_colors.size());
-			  client_CAT[get<0>(nodeid_status[i])]= *randIt;//available_colors.back()
+			  client_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
 			  //client_CAT[get<0>(nodeid_status[i])] = *randIt;
 			  //cout << *randIt << std::endl;
 			  available_colors.erase(randIt);
