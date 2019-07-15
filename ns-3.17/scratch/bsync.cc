@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
 
   SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
-  int nNodes = 3;
+  int nNodes = 10;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   NS_LOG_UNCOND("Number of Nodes in the Scenario: " << nNodes << "\n\n");
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");

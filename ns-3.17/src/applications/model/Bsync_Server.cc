@@ -48,9 +48,12 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("Bsync_ServerApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Server);
 
-Conflict_G_Loc ConflictG(3,2);
+Conflict_G_Loc ConflictG(10,2);
 int m_self_node_id=0;
 bool *ConnectedNodeStatus;
+
+int current_receive_color;
+int current_send_color;
 
 Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
 {
@@ -67,6 +70,8 @@ Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
   opt_net_T=0;
   array_net_Intf=0;
   opt_net_Intf=0;
+  current_receive_color=-1;
+  current_send_color=-1;
   m_specManager=Bsync_Server::m_spectrumManager;
 }
 
@@ -239,8 +244,8 @@ Bsync_Server::Bsync_Server ()
   ref_flag=0;
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
-  received_neighbour_channel_availability = new bool*[4]();
-  for(int i = 0; i < 4; ++i)
+  received_neighbour_channel_availability = new bool*[10]();
+  for(int i = 0; i < 10; i++)
 	  received_neighbour_channel_availability[i] = new bool[11]();
 
   sent_neighbour_channel_availability = new bool[11]();

@@ -155,8 +155,8 @@ RoutingProtocol::RoutingProtocol () :
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
-  m_received_channel_availability = new bool*[4];
-  for(int i = 0; i < 4; ++i)
+  m_received_channel_availability = new bool*[10];
+  for(int i = 0; i < 10; i++)
 	  m_received_channel_availability[i] = new bool[11]();
 
   m_sent_channel_availability = new bool[11]();
@@ -1717,10 +1717,11 @@ RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool* free_ch
 }
 
 void
-RoutingProtocol::setSentColors(int* sent_allotted_colors)
+RoutingProtocol::setSentColors(int* sent_allotted_colors, int no_su)
 {
   NS_LOG_FUNCTION (this);
-  sent_allotted_colors_neighbours = sent_allotted_colors;
+  sent_CAT_neighbours = sent_allotted_colors;
+  num_su=no_su;
   /*for(int i=0;i<2;i++)
   	  std::cout << sent_allotted_colors_neighbours[i] << std::endl;*/
 }
@@ -1743,9 +1744,14 @@ RoutingProtocol::SendHello ()
                                                /*origin=*/ iface.GetLocal (),/*lifetime=*/ Time (AllowedHelloLoss * HelloInterval),
                                                m_crRepository->GetRxChannel(m_ipv4->GetObject <Node>()->GetId()));
       //std::cout << sizeof(m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()]) << std::endl;
-      uint8_t *buffer = new uint8_t[11];//seeoff
+      uint8_t *buffer = new uint8_t[11 + num_su*4];//seeoff
       memcpy((char*) buffer, &m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()], 11);
-      Ptr<Packet> packet = Create<Packet> (buffer, 11);//hello packet changed
+
+      //if (num_su>0)
+      memcpy((char*) buffer+11, &sent_CAT_neighbours, num_su*4);//Sending the CAT from the Source Application
+
+      Ptr<Packet> packet = Create<Packet> (buffer, 11+num_su*4);//hello packet changed
+
       packet->AddHeader (helloHeader);
       TypeHeader tHeader (AODVTYPE_RREP);
       packet->AddHeader (tHeader);

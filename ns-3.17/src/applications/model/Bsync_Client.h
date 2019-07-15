@@ -27,7 +27,6 @@ public:
   bool **received_neighbour_channel_availability;
   bool *sent_neighbour_channel_availability;
   void startCG();
-
   void SetRemote (Address ip, uint16_t port);
   void SetRemote (Ipv4Address ip, uint16_t port);
   void SetRemote (Ipv6Address ip, uint16_t port);
@@ -38,7 +37,7 @@ public:
   void SetFill (uint8_t fill, uint32_t dataSize);
   void SetFill (uint8_t *fill, uint32_t fillSize, uint32_t dataSize);
 
-  TracedCallback<int*> m_SetAllottedColorsCallback_Client;
+  TracedCallback<int*, int> m_SetAllottedColorsCallback_Client;
 
 protected:
   virtual void DoDispose (void);
@@ -133,6 +132,8 @@ public:
     void exec_backoff_app();
     void conflict(Ptr<Node> current_node);
     void color_conflict();
+    //void ReadCAT();
+    //void AddCAT();
 private:
     void get_next_heuristic();
     void stop_current_round();
