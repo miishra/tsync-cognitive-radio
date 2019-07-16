@@ -220,7 +220,7 @@ void Conflict_G_Loc_Client::color_conflict()
   {
 	  if (get<0>(nodeid_status[i])!=m_self_node_id_client)
 	  {
-		  if (ConnectedNodeStatus_Client[get<0>(nodeid_status[i])]==true)
+		  if (ConnectedNodeStatus_Client[get<0>(nodeid_status[i])]==true && (neighbour_status_array_client[get<0>(nodeid_status[i])]==-1))//|| (neighbour_status_array_client[get<0>(nodeid_status[i])]==this->GetNode())
 		  {
 			  vector<int>::iterator randIt = available_colors.begin();
 			  std::advance(randIt, std::rand() %available_colors.size());
@@ -295,13 +295,15 @@ Bsync_Client::Bsync_Client ()
   ref_flag=0;
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
-  received_neighbour_channel_availability = new bool*[10]();
-  for(int i = 0; i < 10; i++)
+
+  tot_su=10;
+
+  neighbour_status_array_client = new int[tot_su]();
+  received_neighbour_channel_availability = new bool*[tot_su]();
+  for(int i = 0; i < tot_su; i++)
 	  received_neighbour_channel_availability[i] = new bool[11]();
 
   sent_neighbour_channel_availability = new bool[11]();
-
-  tot_su=10;
 }
 
 void Bsync_Client::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm)
@@ -335,6 +337,7 @@ void Bsync_Client::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 			//for(int j=0;j<11;j++)
 				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
+			neighbour_status_array_client[ptpt.sending_node_id]=ptpt.received_color;
 			ConnectedNodeStatus_Client[ptpt.sending_node_id]=true;
 			ConflictGC.link_co(ptpt.sending_node_id, snrval);
 		}
@@ -393,7 +396,8 @@ Bsync_Client::MyFunction(SpectrumManager * sm)
   if (!isSMupdated)
   {
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Client::startCG, this);
-	  m_SetSpecAODVCallback_Client(m_spectrumManager, sent_neighbour_channel_availability);
+	  int client_ref_id=0;
+	  m_SetSpecAODVCallback_Client(m_spectrumManager, sent_neighbour_channel_availability, client_ref_id);
   }
 
 }
@@ -626,7 +630,8 @@ void Bsync_Client::startCG()
   {
 	  sent_neighbour_channel_availability[m_free_channels_list[i]]=true;
   }
-  m_SetSpecAODVCallback_Client(m_spectrumManager, sent_neighbour_channel_availability);
+  int client_ref_id=0;
+  m_SetSpecAODVCallback_Client(m_spectrumManager, sent_neighbour_channel_availability, client_ref_id);
   //for(int n : free_channels)
 	  //std::cout << n << '\n';
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();

@@ -23,9 +23,13 @@ public:
   SpectrumManager * m_spectrumManager;
   std::map<Ipv4Address, int> ip_nodeid_hash;
   std::vector<int> m_free_channels_list;
-  bool **received_neighbour_channel_availability;
-  bool *sent_neighbour_channel_availability;
+  bool** received_neighbour_channel_availability;
+  bool* sent_neighbour_channel_availability;
+  int* neighbour_status_array;
   void startCG();
+  void receivedCAT(uint8_t* received_CAT_server);
+
+  TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Server;
 
 protected:
   virtual void DoDispose (void);
@@ -43,7 +47,7 @@ private:
   void transmitasONF(Ptr<Socket> socket);
   void MyFunction(SpectrumManager * sm);
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
-  TracedCallback<SpectrumManager *, bool *> m_SetSpecAODVCallback;
+  TracedCallback<SpectrumManager *, bool *, int> m_SetSpecAODVCallback;
   TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback;
   void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array);
   void GetRoutingTable();

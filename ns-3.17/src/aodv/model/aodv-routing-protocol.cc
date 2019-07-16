@@ -180,6 +180,8 @@ RoutingProtocol::GetTypeId (void)
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallback))
 	.AddTraceSource ("HelloReceiveCallbackClient"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallbackClient))
+   .AddTraceSource ("ReceivedCATCallbackServer"," Send Received CAT to the Server ",
+				   MakeTraceSourceAccessor (&RoutingProtocol::m_ReceivedCATCallback_Server))
     .AddAttribute ("RreqRetries", "Maximum number of retransmissions of RREQ to discover a route",
                    UintegerValue (2),
                    MakeUintegerAccessor (&RoutingProtocol::RreqRetries),
@@ -355,6 +357,8 @@ RoutingProtocol::Start ()
   Config::ConnectWithoutContext ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Client/SetSpecAODVCallbackClient", MakeCallback (&RoutingProtocol::setSpecManager, this));
 
   Config::ConnectWithoutContext ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Client/SetAllottedColorsCallbackClient", MakeCallback (&RoutingProtocol::setSentColors, this));
+
+  Config::ConnectWithoutContext ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Server/SetAllottedColorsCallbackServer", MakeCallback (&RoutingProtocol::setSentColors, this));
 
   if (EnableHello)
     {
@@ -1387,10 +1391,14 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 			  //memcpy(&received_CAT_neighbours[i], (uint8_t *) (&buffer+ 11+ 4*i), 4);
 		  }
 
+		  m_ReceivedCATCallback_Server(received_CAT_neighbours);
+
+		  /*std::cout << "For Node ID: " << m_ipv4->GetObject <Node>()->GetId() << " Received CAT is: \n";
 		  for(int i=0;i<num_su;i++)
 		  {
 			  std::cout << (int) received_CAT_neighbours[i] << '\n';
 		  }
+		  std::cout << std::endl << std::endl;*/
 	  }
 
 	  //memcpy(&m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()], buffer, 11);
@@ -1712,12 +1720,13 @@ RoutingProtocol::AckTimerExpire (Ipv4Address neighbor, Time blacklistTimeout)
 }
 
 void
-RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool* free_channels_sent_list)
+RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool* free_channels_sent_list, int received_ref_node_id)
 {
   NS_LOG_FUNCTION (this);
   //NS_LOG_UNCOND("Spectrum Manager at AODV updated");
   m_specManager_aodv = specManager_aodv;
   m_sent_channel_availability = free_channels_sent_list;
+  ref_node_ID = received_ref_node_id;
   //std::cout << sizeof(m_sent_channel_availability) << std::endl;
   /*for(int i=0;i<4;i++)
   {
@@ -1768,15 +1777,12 @@ RoutingProtocol::SendHello ()
       //std::cout << sizeof(m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()]) << std::endl;
       uint8_t *buffer = new uint8_t[11 + num_su];//seeoff
 
-      /*for(int i=0;i<num_su;i++)
-	  {
-	      std::cout << (int) sent_CAT_neighbours[i] << '\n';
-	  }*/
-
       memcpy((char*) buffer, &m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()], 11);
 
       //if (num_su>0)
-      memcpy((char*) buffer+11, (uint8_t*) &sent_CAT_neighbours, num_su);//Sending the CAT from the Source Application
+      for(int i=11;i<11+num_su;i++)
+    	  buffer[i]=sent_CAT_neighbours[i-11];
+      //memcpy((uint8_t*) &buffer[11], (uint8_t*) &sent_CAT_neighbours, num_su);//Sending the CAT from the Source Application
 
       Ptr<Packet> packet = Create<Packet> (buffer, 11+num_su);//hello packet changed
 
@@ -1785,8 +1791,7 @@ RoutingProtocol::SendHello ()
       packet->AddHeader (tHeader);
       PacketTypePacketTag bt = ns3::PacketTypePacketTag(CTRL_PACKET);
       bt.set_node_id(m_ipv4->GetObject<Node> ()->GetId ());
-      int x=1;
-      bt.set_received_color(x);
+      bt.set_received_color(ref_node_ID);//flag to show the Synchronization status in the received hello message - 0: Master Node -1:Not Synchronized in Time 0: Synchronized in Time
       packet->AddPacketTag(bt);
       // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
       Ipv4Address destination;

@@ -58,7 +58,7 @@ public:
   static TypeId GetTypeId (void);
   static const uint32_t AODV_PORT;
   SpectrumManager *m_specManager_aodv;
-  void setSpecManager(SpectrumManager *specManager_aodv, bool* free_channels_sent_list);
+  void setSpecManager(SpectrumManager *specManager_aodv, bool* free_channels_sent_list, int received_ref_node_id);
   void setSentColors(uint8_t* sent_allotted_colors, int no_su);
   uint8_t* sent_CAT_neighbours;//Channel Assignment Table Sent
   uint8_t* received_CAT_neighbours;//Channel Assignment Table Received
@@ -67,6 +67,7 @@ public:
   std::vector<int> m_received_free_channels_list;
   bool **m_received_channel_availability;
   bool *m_sent_channel_availability;
+  int ref_node_ID;
 
   /// c-tor
   RoutingProtocol ();
@@ -121,6 +122,8 @@ public:
 
   TracedCallback<RoutingTable> m_sendRoutingTableCallbackClient;
   TracedCallback<Ipv4Address, int, bool **> m_MyHelloReceiveCallbackClient;
+
+  TracedCallback<uint8_t*> m_ReceivedCATCallback_Server;
 
 private:
   ///\name Protocol parameters.

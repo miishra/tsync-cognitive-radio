@@ -26,6 +26,7 @@ public:
   std::vector<int> m_free_channels_list;
   bool **received_neighbour_channel_availability;
   bool *sent_neighbour_channel_availability;
+  int* neighbour_status_array_client;
   void startCG();
   void SetRemote (Address ip, uint16_t port);
   void SetRemote (Ipv4Address ip, uint16_t port);
@@ -60,7 +61,7 @@ private:
   void transmitasONF(Ptr<Socket> socket);
   void MyFunction(SpectrumManager * sm);
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
-  TracedCallback<SpectrumManager *, bool *> m_SetSpecAODVCallback_Client;
+  TracedCallback<SpectrumManager *, bool *, int> m_SetSpecAODVCallback_Client;
   TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback_Client;
   void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array);
   void GetRoutingTable();

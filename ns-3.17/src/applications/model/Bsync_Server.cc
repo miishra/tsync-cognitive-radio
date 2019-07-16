@@ -52,6 +52,9 @@ Conflict_G_Loc ConflictG(10,2);
 int m_self_node_id=0;
 bool *ConnectedNodeStatus;
 
+uint8_t* server_CAT;
+uint8_t* server_CAT_received;
+
 int current_receive_color;
 int current_send_color;
 
@@ -62,6 +65,8 @@ Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
   no_pu=num_pu;
   ConnectedNodeStatus = new bool[num_su+num_pu]();
   current_depth=0;
+  server_CAT = new uint8_t[num_su]();
+  server_CAT_received = new uint8_t[num_su]();
   allotted_colors = new int[num_su]();
   array_link_co= new double[num_su]();
   array_link_adj= new double[num_su]();
@@ -166,6 +171,8 @@ void Conflict_G_Loc::color_conflict()
   NS_LOG_FUNCTION (this);
   std::vector<int> available_colors;
   std::vector<tuple <int , double>> nodeid_status;
+  for(int i=0;i<no_su;i++)
+  	  server_CAT[i]=250;
 
   for(int i=0; i<no_su;i++)
 	  nodeid_status.push_back(make_tuple(i, array_link_co[i]));
@@ -197,7 +204,7 @@ void Conflict_G_Loc::color_conflict()
 		  {
 			  vector<int>::iterator randIt = available_colors.begin();
 			  std::advance(randIt, std::rand() %available_colors.size());
-			  allotted_colors[get<0>(nodeid_status[i])]= *randIt;//available_colors.back()
+			  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
 			  //cout << *randIt << std::endl;
 			  available_colors.erase(randIt);
 		  }
@@ -217,6 +224,8 @@ Bsync_Server::GetTypeId (void)
                    MakeUintegerChecker<uint16_t> ())
 	.AddTraceSource ("SetSpecAODVCallback"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&Bsync_Server::m_SetSpecAODVCallback))
+   .AddTraceSource ("SetAllottedColorsCallbackServer"," pass parameters to AODV ",
+				   MakeTraceSourceAccessor (&Bsync_Server::m_SetAllottedColorsCallback_Server))
    /*.AddAttribute ("Node ID", "ID of node on which this sever application is installed.",
 					  UintegerValue (1000),
 					  MakeUintegerAccessor (&Bsync_Server::m_node_id),
@@ -244,7 +253,11 @@ Bsync_Server::Bsync_Server ()
   ref_flag=0;
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
-  received_neighbour_channel_availability = new bool*[10]();
+
+  tot_su=10;
+
+  received_neighbour_channel_availability = new bool*[tot_su]();
+  neighbour_status_array = new int[tot_su]();
   for(int i = 0; i < 10; i++)
 	  received_neighbour_channel_availability[i] = new bool[11]();
 
@@ -283,6 +296,7 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 			//for(int j=0;j<11;j++)
 				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
+			neighbour_status_array[ptpt.sending_node_id]=ptpt.received_color;
 			ConnectedNodeStatus[ptpt.sending_node_id]=true;
 			ConflictG.link_co(ptpt.sending_node_id, snrval);
 		}
@@ -314,7 +328,7 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
   if (!isSMupdated)
   {
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Server::startCG, this);
-	  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability);
+	  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, ref_node_id);
   }
 
 }
@@ -325,6 +339,7 @@ void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** 
 	//std::cout << this->GetNode()->GetId() <<  endl;
 	ip_nodeid_hash[source] = node_id;
 	ConflictG.conflict(this->GetNode());
+	m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
 	received_neighbour_channel_availability = received_status_array;
 	/*for(int j=0;j<11;j++)
 	{
@@ -354,6 +369,11 @@ Bsync_Server::StartApplication (void)
   oss.clear();
   oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/HelloReceiveCallback";
   Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::ReceivedNeighbourSNR,this));
+
+  oss.str("");
+  oss.clear();
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/ReceivedCATCallbackServer";
+  Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::receivedCAT,this));
 
   if (m_socket == 0)
     {
@@ -451,7 +471,7 @@ void Bsync_Server::startCG()
   {
 	  sent_neighbour_channel_availability[m_free_channels_list[i]]=true;
   }
-  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability);
+  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, ref_node_id);
   //for(int n : free_channels)
 	  //std::cout << n << '\n';
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
@@ -459,6 +479,16 @@ void Bsync_Server::startCG()
 	  ConflictG.array_node_wt = 1/(tot_free_channels*1.0);
   NS_LOG_UNCOND(ConflictG.array_node_wt);
   isSMupdated = true;
+}
+
+void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
+{
+  NS_LOG_FUNCTION (this);
+  server_CAT_received = received_CAT_server;
+  /*for(int i=0;i<tot_su;i++)
+  {
+	  std::cout << (int) server_CAT_received[i] << '\n';
+  }*/
 }
 
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)
