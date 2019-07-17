@@ -93,8 +93,8 @@ void Conflict_G_Loc::calc_node_t()
   {
 	  std::vector<int> free_channels = m_specManager->GetListofFreeChannels();
 	  int tot_aval_channels = free_channels.size();
-	  for(int n : free_channels)
-		  std::cout << n << '\n';
+	  /*for(int n : free_channels)
+		  std::cout << n << '\n';*/
 	  //int tot_aval_channels = m_specManager->GetTotalFreeChannelsNow();
 	  array_node_wt[i]= (double) 1/tot_aval_channels;
 	  NS_LOG_INFO(array_node_wt[i]);
@@ -116,6 +116,10 @@ void Conflict_G_Loc::link_co(int node_id, double snrval)
 void Conflict_G_Loc::conflict(Ptr<Node> current_node)
 {
   NS_LOG_FUNCTION (this);
+
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  std::cout << "Making of conflict Graph started at Server: " << current_node->GetId() << std::endl;
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
   Ipv4GlobalRoutingHelper g;
   Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (to_string(current_node->GetId()) + "dynamic-global-routing.routes", std::ios::out);
@@ -157,7 +161,8 @@ void Conflict_G_Loc::conflict(Ptr<Node> current_node)
   		ConnectedNodeStatus[ip_nodeid_hash[Ipv4Address(dest_ip.c_str())]]=true;
   	}
   }
-  ConflictG.color_conflict();
+  if (ref_node_id>-1)
+	  ConflictG.color_conflict();
 }
 
 bool sortbysec(const tuple<int, double> &a,
@@ -205,6 +210,7 @@ void Conflict_G_Loc::color_conflict()
 			  vector<int>::iterator randIt = available_colors.begin();
 			  std::advance(randIt, std::rand() %available_colors.size());
 			  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
+			  transmitasONF(m_socket, get<0>(nodeid_status[i]));
 			  //cout << *randIt << std::endl;
 			  available_colors.erase(randIt);
 		  }
@@ -338,8 +344,11 @@ void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** 
 	NS_LOG_FUNCTION (this);
 	//std::cout << this->GetNode()->GetId() <<  endl;
 	ip_nodeid_hash[source] = node_id;
-	ConflictG.conflict(this->GetNode());
-	m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
+
+
+	/*ConflictG.conflict(this->GetNode());
+
+	m_SetAllottedColorsCallback_Server(server_CAT, tot_su);*/
 	received_neighbour_channel_availability = received_status_array;
 	/*for(int j=0;j<11;j++)
 	{
@@ -353,6 +362,9 @@ void
 Bsync_Server::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+
+  std::cout << "Server App started at Node: " << this->GetNode()->GetId() << std::endl;
+
   m_self_node_id=this->GetNode()->GetId();
   Ptr<Ipv4> ipv4 = this->GetNode()->GetObject<Ipv4> ();
   Ipv4InterfaceAddress iaddr = ipv4->GetAddress (1,0);
@@ -419,8 +431,8 @@ Bsync_Server::StartApplication (void)
 
   m_socket->SetRecvCallback (MakeCallback (&Bsync_Server::HandleRead, this));
   m_socket6->SetRecvCallback (MakeCallback (&Bsync_Server::HandleRead, this));
-  NS_LOG_UNCOND("The value of initial Timestamp of Ordinary Node with ID: " << this->GetNode()->GetId() << " is " << internal_timer);
-  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  /*NS_LOG_UNCOND("The value of initial Timestamp of Ordinary Node with ID: " << this->GetNode()->GetId() << " is " << internal_timer);
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");*/
 }
 
 double Bsync_Server::f_simple(double x)
@@ -453,7 +465,7 @@ void Bsync_Server::reachedT(Ptr<Socket> socket)
   NS_LOG_FUNCTION (this);
   //internal_timer=0;
   if (ref_node_id>=0)
-      transmitasONF(socket);
+      transmitasONF(socket, -1);
   internal_timer=0;
   last_internal_timer_update = Simulator::Now ().GetSeconds ();
   //last_internal_timer_val=internal_timer;
@@ -477,21 +489,38 @@ void Bsync_Server::startCG()
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
   if (tot_free_channels!=0)
 	  ConflictG.array_node_wt = 1/(tot_free_channels*1.0);
-  NS_LOG_UNCOND(ConflictG.array_node_wt);
+  //NS_LOG_UNCOND(ConflictG.array_node_wt);
+
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  std::cout << "Node Weights of conflict Graph updated locally at Server: " << this->GetNode()->GetId() << std::endl;
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
   isSMupdated = true;
+
+  if (ref_node_id>-1)
+  {
+	  ConflictG.conflict(this->GetNode());
+
+	  m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
+  }
+
 }
 
 void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
 {
   NS_LOG_FUNCTION (this);
   server_CAT_received = received_CAT_server;
+
+  if (ref_node_id==-1)
+	  current_receive_color = (int) server_CAT_received[this->GetNode()->GetId()];
+
   /*for(int i=0;i<tot_su;i++)
   {
 	  std::cout << (int) server_CAT_received[i] << '\n';
   }*/
 }
 
-void Bsync_Server::transmitasONF(Ptr<Socket> socket)
+void Bsync_Server::transmitasONF(Ptr<Socket> socket, int sending_node_id)
 {
   NS_LOG_FUNCTION (this);
   //internal_timer =0;
@@ -511,12 +540,24 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
   m_period_count+=1;
   NS_LOG_INFO(m_period_count);*/
 
+  std::map<Ipv4Address, int>::const_iterator it;
+
+  Ipv4Address current_Sending_IP;
+  for (it = ip_nodeid_hash.begin(); it != ip_nodeid_hash.end(); ++it)
+  {
+  	if (it->second == sending_node_id)
+  	{
+  		current_Sending_IP = it->first;
+  		break;
+  	}
+  }
+
   if (Simulator::Now ().GetSeconds () < stop_time)
   {
-	  socket->SendTo (data, 0, Ipv4Address ("255.255.255.255"));
+	  socket->SendTo (data, 0, current_Sending_IP);//Ipv4Address ("255.255.255.255")
 	  ++m_sent;
 	  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
-	  Ipv4Address ("255.255.255.255") << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
+			  current_Sending_IP << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
       //Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);//period+0.0000001
   }
 }
@@ -541,10 +582,10 @@ Bsync_Server::StopApplication ()
       m_socket6->Close ();
       m_socket6->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     }
-  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  /*NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
   NS_LOG_UNCOND("Total number of received Packets Sniffed at node: " << this->GetNode()->GetId() << " is: " << tot_packet_sniffed_rx);
-  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");*/
 
   /*for (int j=0;j<5;j++)
 	  cout << ConnectedNodeStatus[j];

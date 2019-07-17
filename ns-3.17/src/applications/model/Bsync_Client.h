@@ -40,6 +40,11 @@ public:
 
   TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Client;
 
+  void ScheduleTransmit (Time dt, Ptr<Packet> data, int sending_node_id);
+  void ScheduleCommands (Time dt, int sending_node_id);
+  void Client_Bsync_Logic(int sending_node_id);
+  void Send (Ptr<Packet> data, int sending_node_id);
+
 protected:
   virtual void DoDispose (void);
 
@@ -47,11 +52,6 @@ private:
 
   virtual void StartApplication (void);
   virtual void StopApplication (void);
-
-  void ScheduleTransmit (Time dt, Ptr<Packet> data);
-  void ScheduleCommands (Time dt);
-  void Client_Bsync_Logic(void);
-  void Send (Ptr<Packet> data);
 
   void HandleRead (Ptr<Socket> socket);
   double f_simple( double x);

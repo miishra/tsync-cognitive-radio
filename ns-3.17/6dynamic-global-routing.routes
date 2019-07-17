@@ -1,6 +1,6 @@
-Node: 9 Time: 1.7s 
+Node: 6 Time: 1.7s 
 AODV Routing table
 Destination	Gateway		Interface	Flag	Expire		Hops
-10.1.1.255	10.1.1.255	10.1.1.10	UP	9223372035.15 	1
+10.1.1.255	10.1.1.255	10.1.1.7	UP	9223372035.15 	1
 127.0.0.1	127.0.0.1	127.0.0.1	UP	9223372035.15 	1
 

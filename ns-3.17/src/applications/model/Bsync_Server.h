@@ -26,10 +26,17 @@ public:
   bool** received_neighbour_channel_availability;
   bool* sent_neighbour_channel_availability;
   int* neighbour_status_array;
+  int ref_node_id;
   void startCG();
   void receivedCAT(uint8_t* received_CAT_server);
 
   TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Server;
+
+  Ptr<Socket> m_socket;
+  Ptr<Socket> m_socket6;
+
+  void reachedT(Ptr<Socket> socket);
+  void transmitasONF(Ptr<Socket> socket, int sending_node_id);
 
 protected:
   virtual void DoDispose (void);
@@ -43,8 +50,6 @@ private:
   double f_simple( double x);
   double f_inver( double x);
   double increment_decrement(double x, double y);
-  void reachedT(Ptr<Socket> socket);
-  void transmitasONF(Ptr<Socket> socket);
   void MyFunction(SpectrumManager * sm);
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<SpectrumManager *, bool *, int> m_SetSpecAODVCallback;
@@ -58,9 +63,6 @@ private:
   uint32_t m_sent;
   uint32_t m_received;
   int m_period_count;
-  int ref_node_id;
-  Ptr<Socket> m_socket;
-  Ptr<Socket> m_socket6;
   Address m_local;
   nState m_state;
   bool m_status;

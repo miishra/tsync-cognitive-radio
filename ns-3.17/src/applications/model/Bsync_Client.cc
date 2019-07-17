@@ -53,7 +53,6 @@ bool *ConnectedNodeStatus_Client;
 uint8_t* client_CAT;
 
 int current_client_receive_color;
-int current_client_send_color;
 
 Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
 {
@@ -71,7 +70,6 @@ Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
   array_net_Intf=0;
   opt_net_Intf=0;
   current_client_receive_color=-1;
-  current_client_send_color=-1;
   m_specManager=Bsync_Client::m_spectrumManager;
 }
 
@@ -100,8 +98,8 @@ void Conflict_G_Loc_Client::calc_node_t()
   {
 	  std::vector<int> free_channels = m_specManager->GetListofFreeChannels();
 	  int tot_aval_channels = free_channels.size();
-	  for(int n : free_channels)
-		  std::cout << n << '\n';
+	  /*for(int n : free_channels)
+		  std::cout << n << '\n';*/
 	  //int tot_aval_channels = m_specManager->GetTotalFreeChannelsNow();
 	  array_node_wt[i]= (double) 1/tot_aval_channels;
 	  NS_LOG_INFO(array_node_wt[i]);
@@ -136,6 +134,10 @@ void Conflict_G_Loc_Client::ReadCAT()
 void Conflict_G_Loc_Client::conflict(Ptr<Node> current_node)
 {
   NS_LOG_FUNCTION (this);
+
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  std::cout << "Making of conflict Graph started at Client: " << current_node->GetId() << std::endl;
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
   Ipv4GlobalRoutingHelper g;
   Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (to_string(current_node->GetId()) + "dynamic-global-routing-client.routes", std::ios::out);
@@ -225,6 +227,7 @@ void Conflict_G_Loc_Client::color_conflict()
 			  vector<int>::iterator randIt = available_colors.begin();
 			  std::advance(randIt, std::rand() %available_colors.size());
 			  client_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
+			  ScheduleCommands (Seconds (0.), get<0>(nodeid_status[i]));
 			  //client_CAT[get<0>(nodeid_status[i])] = *randIt;
 			  //cout << *randIt << std::endl;
 			  available_colors.erase(randIt);
@@ -407,8 +410,10 @@ void Bsync_Client::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** 
 	NS_LOG_FUNCTION (this);
 	//std::cout << this->GetNode()->GetId() <<  endl;
 	ip_nodeid_hash[source] = node_id;
-	ConflictGC.conflict(this->GetNode());
-	m_SetAllottedColorsCallback_Client(client_CAT, tot_su);
+
+	/*ConflictGC.conflict(this->GetNode());
+
+	m_SetAllottedColorsCallback_Client(client_CAT, tot_su);*/
 	received_neighbour_channel_availability = received_status_array;
 	/*for(int j=0;j<11;j++)
 	{
@@ -422,6 +427,9 @@ void
 Bsync_Client::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
+
+  std::cout << "Client App started at Node: " << this->GetNode()->GetId() << std::endl;
+
   m_self_node_id_client=this->GetNode()->GetId();
   Ptr<Ipv4> ipv4 = this->GetNode()->GetObject<Ipv4> ();
   Ipv4InterfaceAddress iaddr = ipv4->GetAddress (1,0);
@@ -457,7 +465,12 @@ Bsync_Client::StartApplication (void)
     }
 
   m_socket->SetRecvCallback (MakeCallback (&Bsync_Client::HandleRead, this));
-  ScheduleCommands (Seconds (0.));
+
+  ConflictGC.conflict(this->GetNode());
+
+  m_SetAllottedColorsCallback_Client(client_CAT, tot_su);
+
+  //ScheduleCommands (Seconds (0.));Initially Here
   //ScheduleTransmit (Seconds (0.));
 }
 
@@ -582,17 +595,17 @@ Bsync_Client::SetFill (uint8_t *fill, uint32_t fillSize, uint32_t dataSize)
 }
 
 void
-Bsync_Client::ScheduleTransmit (Time dt, Ptr<Packet> data)
+Bsync_Client::ScheduleTransmit (Time dt, Ptr<Packet> data, int sending_node_id)
 {
   NS_LOG_FUNCTION (this << dt);
-  m_sendEvent = Simulator::Schedule (dt, &Bsync_Client::Send, this, data);
+  m_sendEvent = Simulator::Schedule (dt, &Bsync_Client::Send, this, data, sending_node_id);
 }
 
 void
-Bsync_Client::ScheduleCommands (Time dt)
+Bsync_Client::ScheduleCommands (Time dt, int sending_node_id)
 {
   NS_LOG_FUNCTION (this << dt);
-  m_ControlEvent = Simulator::Schedule (Seconds (0.), &Bsync_Client::Client_Bsync_Logic, this);
+  m_ControlEvent = Simulator::Schedule (Seconds (0.), &Bsync_Client::Client_Bsync_Logic, this, sending_node_id);
 }
 
 double Bsync_Client::f_simple(double x)
@@ -637,12 +650,17 @@ void Bsync_Client::startCG()
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
   if (tot_free_channels!=0)
 	  ConflictGC.array_node_wt = 1/(tot_free_channels*1.0);
-  NS_LOG_UNCOND(ConflictGC.array_node_wt);
+  //NS_LOG_UNCOND(ConflictGC.array_node_wt);
+
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  std::cout << "Node Weights of conflict Graph updated locally at Client: " << this->GetNode()->GetId() << std::endl;
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
   isSMupdated = true;
 }
 
 void
-Bsync_Client::Client_Bsync_Logic (void)
+Bsync_Client::Client_Bsync_Logic (int sending_node_id)
 {
   internal_timer =0;
   ++m_sent;
@@ -658,13 +676,13 @@ Bsync_Client::Client_Bsync_Logic (void)
   m_size = sizeof(BsyncData);
   if (Simulator::Now ().GetSeconds () < stop_time)
   {
-	  ScheduleTransmit (Seconds (0.), data);
-	  Simulator::Schedule (Seconds (period*1.0), &Bsync_Client::Client_Bsync_Logic, this);
+	  ScheduleTransmit (Seconds (0.), data, sending_node_id);
+	  Simulator::Schedule (Seconds (period*1.0), &Bsync_Client::Client_Bsync_Logic, this, sending_node_id);
   }
 }
 
 void
-Bsync_Client::Send (Ptr<Packet> data)
+Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
 {
   NS_LOG_FUNCTION (this);
 
@@ -696,6 +714,19 @@ Bsync_Client::Send (Ptr<Packet> data)
     }*/
   // call to the trace sinks before the packet is actually sent,
   // so that tags added to the packet can be sent as well
+  std::map<Ipv4Address, int>::const_iterator it;
+
+  Ipv4Address current_Sending_IP;
+  for (it = ip_nodeid_hash.begin(); it != ip_nodeid_hash.end(); ++it)
+  {
+	  if (it->second == sending_node_id)
+	  {
+		  current_Sending_IP = it->first;
+		  break;
+	  }
+  }
+  SetRemote(current_Sending_IP,9);
+
   m_txTrace (data);
   m_socket->Send (data);
   uint8_t *buffer = new uint8_t[data->GetSize ()];
