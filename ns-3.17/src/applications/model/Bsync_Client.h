@@ -41,8 +41,8 @@ public:
   TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Client;
 
   void ScheduleTransmit (Time dt, Ptr<Packet> data, int sending_node_id);
-  void ScheduleCommands (Time dt, int sending_node_id);
-  void Client_Bsync_Logic(int sending_node_id);
+  void ScheduleCommands (Time dt);
+  void Client_Bsync_Logic();
   void Send (Ptr<Packet> data, int sending_node_id);
 
 protected:

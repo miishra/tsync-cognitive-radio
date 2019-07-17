@@ -54,6 +54,8 @@ uint8_t* client_CAT;
 
 int current_client_receive_color;
 
+std::vector<int> childvector;
+
 Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
 {
   NS_LOG_FUNCTION (this);
@@ -179,6 +181,17 @@ void Conflict_G_Loc_Client::conflict(Ptr<Node> current_node)
   		ConnectedNodeStatus_Client[ip_nodeid_hash[Ipv4Address(dest_ip.c_str())]]=true;
   	}
   }
+
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  std::cout << "In the Conflict Graph, Following nodes are connected at Client: " << current_node->GetId() << std::endl;
+  for (int j=0;j<no_su;j++)
+  {
+	  if (ConnectedNodeStatus_Client[j]==true && j!= current_node->GetId())
+		  cout << "Node: " << j << "\t";
+  }
+  cout << endl;
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
   ConflictGC.color_conflict();
 }
 
@@ -222,18 +235,32 @@ void Conflict_G_Loc_Client::color_conflict()
   {
 	  if (get<0>(nodeid_status[i])!=m_self_node_id_client)
 	  {
-		  if (ConnectedNodeStatus_Client[get<0>(nodeid_status[i])]==true && (neighbour_status_array_client[get<0>(nodeid_status[i])]==-1))//|| (neighbour_status_array_client[get<0>(nodeid_status[i])]==this->GetNode())
+		  if (ConnectedNodeStatus_Client[get<0>(nodeid_status[i])]==true)//|| (neighbour_status_array_client[get<0>(nodeid_status[i])]==this->GetNode()) (neighbour_status_array_client[get<0>(nodeid_status[i])]==-1)
 		  {
 			  vector<int>::iterator randIt = available_colors.begin();
 			  std::advance(randIt, std::rand() %available_colors.size());
-			  client_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
-			  ScheduleCommands (Seconds (0.), get<0>(nodeid_status[i]));
+			  client_CAT[get<0>(nodeid_status[i])]= *randIt;//available_colors.back()
 			  //client_CAT[get<0>(nodeid_status[i])] = *randIt;
-			  //cout << *randIt << std::endl;
-			  available_colors.erase(randIt);
+			  //std::cout << get<0>(nodeid_status[i]) << (int) client_CAT[get<0>(nodeid_status[i])] << std::endl;
+			  available_colors.erase(std::remove(available_colors.begin(), available_colors.end(), *randIt), available_colors.end());
+			  childvector.push_back(get<0>(nodeid_status[i]));
+			  //ScheduleCommands (Seconds (0.), get<0>(nodeid_status[i]));
 		  }
 	  }
   }
+
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  std::cout << "In Coloring of Conflict Graph, Following Colors are allocated to neighbors at Client: " << m_self_node_id_client << std::endl;
+  for (int j=0;j<no_su;j++)
+  {
+	  if (client_CAT[j]!=250 && j!= m_self_node_id_client)
+  		  cout << "Node: " << j << " with Color: " << (int) client_CAT[j] << "\t";
+  }
+  cout << endl;
+  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
+  ScheduleCommands (Seconds (0.));
+
 }
 
 TypeId
@@ -466,10 +493,6 @@ Bsync_Client::StartApplication (void)
 
   m_socket->SetRecvCallback (MakeCallback (&Bsync_Client::HandleRead, this));
 
-  ConflictGC.conflict(this->GetNode());
-
-  m_SetAllottedColorsCallback_Client(client_CAT, tot_su);
-
   //ScheduleCommands (Seconds (0.));Initially Here
   //ScheduleTransmit (Seconds (0.));
 }
@@ -602,10 +625,10 @@ Bsync_Client::ScheduleTransmit (Time dt, Ptr<Packet> data, int sending_node_id)
 }
 
 void
-Bsync_Client::ScheduleCommands (Time dt, int sending_node_id)
+Bsync_Client::ScheduleCommands (Time dt)
 {
   NS_LOG_FUNCTION (this << dt);
-  m_ControlEvent = Simulator::Schedule (Seconds (0.), &Bsync_Client::Client_Bsync_Logic, this, sending_node_id);
+  m_ControlEvent = Simulator::Schedule (Seconds (0.), &Bsync_Client::Client_Bsync_Logic, this);
 }
 
 double Bsync_Client::f_simple(double x)
@@ -656,29 +679,34 @@ void Bsync_Client::startCG()
   std::cout << "Node Weights of conflict Graph updated locally at Client: " << this->GetNode()->GetId() << std::endl;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
+  ConflictGC.conflict(this->GetNode());
+
+  m_SetAllottedColorsCallback_Client(client_CAT, tot_su);
+
   isSMupdated = true;
 }
 
 void
-Bsync_Client::Client_Bsync_Logic (int sending_node_id)
+Bsync_Client::Client_Bsync_Logic ()
 {
-  internal_timer =0;
-  ++m_sent;
-  m_status=true;
-  BsyncData Bsync_data;
-  m_state = SYNCING;
-  Bsync_data.sender=this->GetNode()->GetId();
-  Bsync_data.type = SYNC_PULSE_PACKET;
-  Bsync_data.s_sent_ts = Simulator::Now ().GetSeconds ();
-  uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
-  memcpy((char*) buffer, &Bsync_data, sizeof(BsyncData));
-  Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
-  m_size = sizeof(BsyncData);
-  if (Simulator::Now ().GetSeconds () < stop_time)
-  {
-	  ScheduleTransmit (Seconds (0.), data, sending_node_id);
-	  Simulator::Schedule (Seconds (period*1.0), &Bsync_Client::Client_Bsync_Logic, this, sending_node_id);
-  }
+	for(int i=0; i<childvector.size(); i++)
+	{
+		internal_timer =0;
+		++m_sent;
+		m_status=true;
+		BsyncData Bsync_data_send;
+		m_state = SYNCING;
+		Bsync_data_send.sender=m_self_node_id_client;
+		Bsync_data_send.type = SYNC_PULSE_PACKET;
+		Bsync_data_send.s_sent_ts = Simulator::Now ().GetSeconds ();
+		uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
+		memcpy((char*) buffer, &Bsync_data_send, sizeof(BsyncData));
+		Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
+		m_size = sizeof(BsyncData);
+		if (Simulator::Now ().GetSeconds () < stop_time)
+			ScheduleTransmit (Seconds (0.), data, childvector[i]);
+	}
+  Simulator::Schedule (Seconds (period*1.0), &Bsync_Client::Client_Bsync_Logic, this);
 }
 
 void
@@ -714,11 +742,13 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
     }*/
   // call to the trace sinks before the packet is actually sent,
   // so that tags added to the packet can be sent as well
+
   std::map<Ipv4Address, int>::const_iterator it;
 
   Ipv4Address current_Sending_IP;
   for (it = ip_nodeid_hash.begin(); it != ip_nodeid_hash.end(); ++it)
   {
+	  //std::cout << it->first << std::endl;
 	  if (it->second == sending_node_id)
 	  {
 		  current_Sending_IP = it->first;
@@ -728,14 +758,16 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
   SetRemote(current_Sending_IP,9);
 
   m_txTrace (data);
+  //std::cout << current_Sending_IP << std::endl;
   m_socket->Send (data);
+
   uint8_t *buffer = new uint8_t[data->GetSize ()];
   data->CopyData(buffer, data->GetSize ());
 
   ++m_sent;
 
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
-  NS_LOG_UNCOND("Round: " << m_period_count << " of Master Node with Node ID: " << this->GetNode()->GetId() << " Current TimeStamp Value: " << (double)((BsyncData*) buffer)->s_sent_ts);
+  NS_LOG_UNCOND("Round: " << m_period_count << " of Master Node with Node ID: " << m_self_node_id_client << " Current TimeStamp Value: " << (double)((BsyncData*) buffer)->s_sent_ts);
   m_period_count+=1;
 
   if (Ipv4Address::IsMatchingType (m_peerAddress))
