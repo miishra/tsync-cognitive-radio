@@ -21,7 +21,7 @@ public:
   Bsync_Server ();
   virtual ~Bsync_Server ();
   SpectrumManager * m_spectrumManager;
-  std::map<Ipv4Address, int> ip_nodeid_hash;
+  int m_self_node_id;
   std::vector<int> m_free_channels_list;
   bool** received_neighbour_channel_availability;
   bool* sent_neighbour_channel_availability;
@@ -29,6 +29,12 @@ public:
   int ref_node_id;
   void startCG();
   void receivedCAT(uint8_t* received_CAT_server);
+
+  int current_receive_color;
+  int current_send_color;
+
+  uint8_t* server_CAT;
+  uint8_t* server_CAT_received;
 
   TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Server;
 

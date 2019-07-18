@@ -56,6 +56,9 @@ int current_client_receive_color;
 
 std::vector<int> childvector;
 
+std::map<Ipv4Address, int> ip_nodeid_hash;
+Ptr<Socket> m_socket;
+
 Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
 {
   NS_LOG_FUNCTION (this);
@@ -435,7 +438,7 @@ Bsync_Client::MyFunction(SpectrumManager * sm)
 void Bsync_Client::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** received_status_array)
 {
 	NS_LOG_FUNCTION (this);
-	//std::cout << this->GetNode()->GetId() <<  endl;
+	//std::cout << source << node_id << " " <<  endl;
 	ip_nodeid_hash[source] = node_id;
 
 	/*ConflictGC.conflict(this->GetNode());
@@ -659,6 +662,7 @@ double Bsync_Client::increment_decrement(double x, double y)
 void Bsync_Client::startCG()
 {
   NS_LOG_FUNCTION (this);
+
   //ConflictG = Conflict_G_Loc(3, 2);
   m_free_channels_list = m_spectrumManager->GetListofFreeChannels();
   int tot_free_channels = m_free_channels_list.size();
@@ -684,6 +688,8 @@ void Bsync_Client::startCG()
   m_SetAllottedColorsCallback_Client(client_CAT, tot_su);
 
   isSMupdated = true;
+
+  //std::cout << m_socket->GetAllowBroadcast() << std::endl;
 }
 
 void
@@ -714,41 +720,14 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
 {
   NS_LOG_FUNCTION (this);
 
-  //NS_ASSERT (m_sendEvent.IsExpired ());
-
-  /*Ptr<Packet> p;
-  if (m_dataSize)
-    {
-      //
-      // If m_dataSize is non-zero, we have a data buffer of the same size that we
-      // are expected to copy and send.  This state of affairs is created if one of
-      // the Fill functions is called.  In this case, m_size must have been set
-      // to agree with m_dataSize
-      //
-      NS_ASSERT_MSG (m_dataSize == m_size, "Bsync_Client::Send(): m_size and m_dataSize inconsistent");
-      NS_ASSERT_MSG (m_data, "Bsync_Client::Send(): m_dataSize but no m_data");
-      p = Create<Packet> (m_data, m_dataSize);
-    }
-  else
-    {
-      //
-      // If m_dataSize is zero, the client has indicated that she doesn't care
-      // about the data itself either by specifying the data size by setting
-      // the corresponding atribute or by not calling a SetFill function.  In
-      // this case, we don't worry about it either.  But we do allow m_size
-      // to have a value different from the (zero) m_dataSize.
-      //
-      p = Create<Packet> (m_size);
-    }*/
-  // call to the trace sinks before the packet is actually sent,
-  // so that tags added to the packet can be sent as well
-
-  std::map<Ipv4Address, int>::const_iterator it;
+  std::map<Ipv4Address, int>::iterator it;
 
   Ipv4Address current_Sending_IP;
+
+  //std::cout << ip_nodeid_hash.size() << std::endl;
+
   for (it = ip_nodeid_hash.begin(); it != ip_nodeid_hash.end(); ++it)
   {
-	  //std::cout << it->first << std::endl;
 	  if (it->second == sending_node_id)
 	  {
 		  current_Sending_IP = it->first;
@@ -758,7 +737,6 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
   SetRemote(current_Sending_IP,9);
 
   m_txTrace (data);
-  //std::cout << current_Sending_IP << std::endl;
   m_socket->Send (data);
 
   uint8_t *buffer = new uint8_t[data->GetSize ()];
@@ -766,8 +744,8 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
 
   ++m_sent;
 
-  NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
-  NS_LOG_UNCOND("Round: " << m_period_count << " of Master Node with Node ID: " << m_self_node_id_client << " Current TimeStamp Value: " << (double)((BsyncData*) buffer)->s_sent_ts);
+  //NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+  //NS_LOG_UNCOND("Round: " << m_period_count << " of Master Node with Node ID: " << m_self_node_id_client << " Current TimeStamp Value: " << (double)((BsyncData*) buffer)->s_sent_ts);
   m_period_count+=1;
 
   if (Ipv4Address::IsMatchingType (m_peerAddress))

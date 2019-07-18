@@ -22,7 +22,6 @@ public:
   virtual ~Bsync_Client ();
 
   SpectrumManager * m_spectrumManager;
-  std::map<Ipv4Address, int> ip_nodeid_hash;
   std::vector<int> m_free_channels_list;
   bool **received_neighbour_channel_availability;
   bool *sent_neighbour_channel_availability;
@@ -88,7 +87,6 @@ private:
 
   uint32_t m_sent;
   uint32_t m_received;
-  Ptr<Socket> m_socket;
   Address m_peerAddress;
   uint16_t m_peerPort;
   EventId m_sendEvent;
