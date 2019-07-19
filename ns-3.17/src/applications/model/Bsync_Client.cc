@@ -57,7 +57,8 @@ int current_client_receive_color;
 std::vector<int> childvector;
 
 std::map<Ipv4Address, int> ip_nodeid_hash;
-Ptr<Socket> m_socket;
+
+Ptr<Socket> m_socket_client;//socket destructor called problem
 
 Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
 {
@@ -313,7 +314,7 @@ Bsync_Client::Bsync_Client ()
   m_sent = 0;
   m_received=0;int current_receive_color;
   int current_send_color;
-  m_socket = 0;
+  m_socket_client = 0;
   m_sendEvent = EventId ();
   m_data = 0;
   m_dataSize = 0;
@@ -382,7 +383,7 @@ void Bsync_Client::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 Bsync_Client::~Bsync_Client()
 {
   NS_LOG_FUNCTION (this);
-  m_socket = 0;
+  m_socket_client = 0;
 
   delete [] m_data;
   m_data = 0;
@@ -477,24 +478,24 @@ Bsync_Client::StartApplication (void)
   oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/HelloReceiveCallback";
   Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Client::ReceivedNeighbourSNR,this));
 
-  if (m_socket == 0)
+  if (m_socket_client == 0)
     {
       TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
-      m_socket = Socket::CreateSocket (GetNode (), tid);
-      m_socket->SetAllowBroadcast(true);
-      if (Ipv4Address::IsMatchingType(m_peerAddress) == true)
+      m_socket_client = Socket::CreateSocket (GetNode (), tid);
+      m_socket_client->SetAllowBroadcast(true);
+      /*if (Ipv4Address::IsMatchingType(m_peerAddress) == true)
         {
-          m_socket->Bind();
-          m_socket->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
+          m_socket_client->Bind();
+          m_socket_client->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
         }
       else if (Ipv6Address::IsMatchingType(m_peerAddress) == true)
         {
-          m_socket->Bind6();
-          m_socket->Connect (Inet6SocketAddress (Ipv6Address::ConvertFrom(m_peerAddress), m_peerPort));
-        }
+          m_socket_client->Bind6();
+          m_socket_client->Connect (Inet6SocketAddress (Ipv6Address::ConvertFrom(m_peerAddress), m_peerPort));
+        }*/
     }
 
-  m_socket->SetRecvCallback (MakeCallback (&Bsync_Client::HandleRead, this));
+  m_socket_client->SetRecvCallback (MakeCallback (&Bsync_Client::HandleRead, this));
 
   //ScheduleCommands (Seconds (0.));Initially Here
   //ScheduleTransmit (Seconds (0.));
@@ -507,11 +508,11 @@ Bsync_Client::StopApplication ()
   NS_LOG_INFO("Client with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");
   NS_LOG_INFO("Client with node ID: " << this->GetNode()->GetId() << "had final Timestamp: " << Simulator::Now ().GetSeconds ()-1);
 
-  if (m_socket != 0)
+  if (m_socket_client != 0)
     {
-      m_socket->Close ();
-      m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
-      m_socket = 0;
+      m_socket_client->Close ();
+      m_socket_client->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
+      m_socket_client = 0;
     }
 
   Simulator::Cancel (m_sendEvent);
@@ -689,7 +690,7 @@ void Bsync_Client::startCG()
 
   isSMupdated = true;
 
-  //std::cout << m_socket->GetAllowBroadcast() << std::endl;
+  //std::cout << m_socket_client->GetAllowBroadcast() << std::endl;
 }
 
 void
@@ -734,10 +735,15 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
 		  break;
 	  }
   }
+
   SetRemote(current_Sending_IP,9);
 
+  //m_socket_client->Cleanup();
+  //m_socket_client->Bind();
+  m_socket_client->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
+
   m_txTrace (data);
-  m_socket->Send (data);
+  m_socket_client->Send (data);
 
   uint8_t *buffer = new uint8_t[data->GetSize ()];
   data->CopyData(buffer, data->GetSize ());
@@ -758,6 +764,10 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
       NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client sent " << m_size << " bytes to " <<
                    Ipv6Address::ConvertFrom (m_peerAddress) << " port " << m_peerPort << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
     }
+
+  //m_socket_client->Close();
+
+  //m_socket_client->Cleanup();
 
   /*if (m_sent < m_count)
     {

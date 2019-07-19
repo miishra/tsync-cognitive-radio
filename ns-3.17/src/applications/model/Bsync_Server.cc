@@ -214,6 +214,7 @@ void Conflict_G_Loc::color_conflict()
 			  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
 			  //transmitasONF(m_socket, get<0>(nodeid_status[i]));
 			  //cout << *randIt << std::endl;
+			  server_Vector.push_back(get<0>(nodeid_status[i]));
 			  available_colors.erase(randIt);
 		  }
 	  }
@@ -228,6 +229,8 @@ void Conflict_G_Loc::color_conflict()
   }
   cout << endl;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
+  transmitasONF(m_socket);
 
 }
 
@@ -544,46 +547,53 @@ void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
   }*/
 }
 
-void Bsync_Server::transmitasONF(Ptr<Socket> socket, int sending_node_id)
+void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 {
-  NS_LOG_FUNCTION (this);
-  //internal_timer =0;
-  BsyncData Bsync_data;
-  m_state = SYNCING;
-  Bsync_data.sender=this->GetNode()->GetId();
-  Bsync_data.type = SYNC_PULSE_PACKET;
-  Bsync_data.s_sent_ts = timestamp;
-  uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
-  memcpy((char*) buffer, &Bsync_data, sizeof(BsyncData));
-  Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
-  m_size = sizeof(BsyncData);
+	for(int i=0; i<server_Vector.size(); i++)
+	{
+		NS_LOG_FUNCTION (this);
+		//internal_timer =0;
+		BsyncData Bsync_data;
+		m_state = SYNCING;
+		Bsync_data.sender=this->GetNode()->GetId();
+		Bsync_data.type = SYNC_PULSE_PACKET;
+		Bsync_data.s_sent_ts = timestamp;
+		uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
+		memcpy((char*) buffer, &Bsync_data, sizeof(BsyncData));
+		Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
+		m_size = sizeof(BsyncData);
 
-  /*Time next_schedule=Seconds(period);//0.000001
-  for(int i=0;i<m_period_count;i++)
-  	  next_schedule+=next_schedule;
-  m_period_count+=1;
-  NS_LOG_INFO(m_period_count);*/
+		/*Time next_schedule=Seconds(period);//0.000001
+		for(int i=0;i<m_period_count;i++)
+			next_schedule+=next_schedule;
+		m_period_count+=1;
+		NS_LOG_INFO(m_period_count);*/
 
-  std::map<Ipv4Address, int>::iterator it;
+		std::map<Ipv4Address, int>::iterator it;
 
-  Ipv4Address current_Sending_IP;
-  for (it = ip_nodeid_hash_client.begin(); it != ip_nodeid_hash_client.end(); ++it)
-  {
-  	if (it->second == sending_node_id)
-  	{
-  		current_Sending_IP = it->first;
-  		break;
-  	}
-  }
+		Ipv4Address current_Sending_IP;
+		for (it = ip_nodeid_hash_client.begin(); it != ip_nodeid_hash_client.end(); ++it)
+		{
+			if (it->second == server_Vector[i])
+		  	{
+		  		current_Sending_IP = it->first;
+		  		break;
+		  	}
+		}
 
-  if (Simulator::Now ().GetSeconds () < stop_time)
-  {
-	  socket->SendTo (data, 0, current_Sending_IP);//Ipv4Address ("255.255.255.255")
-	  ++m_sent;
-	  NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
-			  current_Sending_IP << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
-      //Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);//period+0.0000001
-  }
+		if (Simulator::Now ().GetSeconds () < stop_time)
+		{
+			//socket->Cleanup();
+			//socket->Connect (InetSocketAddress (current_Sending_IP,9));
+
+			socket->SendTo (data, 0, current_Sending_IP);//Ipv4Address ("255.255.255.255")
+			++m_sent;
+			NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
+			current_Sending_IP << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
+		    //Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);//period+0.0000001
+		}
+	}
+	Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::transmitasONF, this, socket);
 }
 
 void
@@ -703,6 +713,9 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 		  memcpy((char*) repbuffer, &Bsync_data, sizeof(BsyncData));
 		  Ptr<Packet> data = Create<Packet> (repbuffer, sizeof(BsyncData));
 		  m_size = sizeof(BsyncData);
+
+		  //socket->Connect (from);
+
 		  socket->SendTo (data, 0, from);//packet
 		  ++m_sent;
 

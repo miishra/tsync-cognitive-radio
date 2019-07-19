@@ -70,22 +70,23 @@ int main (int argc, char *argv[])
   // Set it to adhoc mode
   wifiMac.SetType ("ns3::AdhocWifiMac");
 
-  // Position our nodes with 110 m in between
-  /*MobilityHelper mobility;
-  Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
-  double start = 110.0;
-  for (int i=0; i<nNodes; i++) {
-    positionAlloc->Add (Vector (start, 0.0, 0.0));
-    start = start+10;//20
-  }
-  mobility.SetPositionAllocator (positionAlloc);
-  mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");*/
-
   MobilityHelper mobility;
-  mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
+
+  /*mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
                                       "X", StringValue ("0.0"),
                                       "Y", StringValue ("0.0"),
-                                      "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=50]"));
+                                      "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=50]"));*/
+
+  // Position our nodes with 110 m in between
+  Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
+  double start = 110.0;
+  for (int i=0; i<nNodes; i++)
+  {
+  	  positionAlloc->Add (Vector (start, 0.0, 0.0));
+  	  start = start+10;//20
+  }
+  mobility.SetPositionAllocator (positionAlloc);
+
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 
   /*mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
@@ -155,7 +156,7 @@ int main (int argc, char *argv[])
   uint32_t packetSize = 1024;
   uint32_t maxPacketCount = 2;
   Time interPacketInterval = Seconds (1.);
-  Bsync_ClientHelper client (Ipv4Address ("255.255.255.255"), port);//Address(i.GetAddress (c.GetN()-1))
+  Bsync_ClientHelper client (Ipv4Address ("1.1.1.1"), port);//problem setting specific ip
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interPacketInterval));
   client.SetAttribute ("PacketSize", UintegerValue (packetSize));

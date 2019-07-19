@@ -26,6 +26,9 @@ public:
   bool **received_neighbour_channel_availability;
   bool *sent_neighbour_channel_availability;
   int* neighbour_status_array_client;
+
+  //Ptr<Socket> m_socket;
+
   void startCG();
   void SetRemote (Address ip, uint16_t port);
   void SetRemote (Ipv4Address ip, uint16_t port);

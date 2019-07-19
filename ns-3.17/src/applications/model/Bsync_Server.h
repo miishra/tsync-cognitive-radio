@@ -36,13 +36,15 @@ public:
   uint8_t* server_CAT;
   uint8_t* server_CAT_received;
 
+  std::vector<int> server_Vector;
+
   TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Server;
 
   Ptr<Socket> m_socket;
   Ptr<Socket> m_socket6;
 
   void reachedT(Ptr<Socket> socket);
-  void transmitasONF(Ptr<Socket> socket, int sending_node_id);
+  void transmitasONF(Ptr<Socket> socket);
 
 protected:
   virtual void DoDispose (void);
