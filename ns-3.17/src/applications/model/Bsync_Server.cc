@@ -150,15 +150,18 @@ void Bsync_Server::color_conflict()
   {
 	  if (get<0>(nodeid_status[i])!=m_self_node_id)
 	  {
-		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true ) //(neighbour_status_array[get<0>(nodeid_status[i])]==-1)
+		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true && (neighbour_status_array[get<0>(nodeid_status[i])]==-1)) //(neighbour_status_array[get<0>(nodeid_status[i])]==-1)
 		  {
-			  vector<int>::iterator randIt = available_colors.begin();
-			  std::advance(randIt, std::rand() %available_colors.size());
-			  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
-			  //transmitasONF(m_socket, get<0>(nodeid_status[i]));
-			  //cout << *randIt << std::endl;
-			  server_Vector.push_back(get<0>(nodeid_status[i]));
-			  available_colors.erase(randIt);
+			  if (available_colors.size()>0)
+			  {
+				  vector<int>::iterator randIt = available_colors.begin();
+				  std::advance(randIt, std::rand() %available_colors.size());
+				  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
+				  //transmitasONF(m_socket, get<0>(nodeid_status[i]));
+				  //cout << *randIt << std::endl;
+				  server_Vector.push_back(get<0>(nodeid_status[i]));
+				  available_colors.erase(randIt);
+			  }
 		  }
 	  }
   }
@@ -223,7 +226,9 @@ Bsync_Server::Bsync_Server ()
 
   received_neighbour_channel_availability = new bool*[tot_su]();
   neighbour_status_array = new int[tot_su]();
-  for(int i = 0; i < 10; i++)
+  for(int i = 0; i < tot_su; i++)
+	  neighbour_status_array[i]=-1;
+  for(int i = 0; i < tot_su; i++)
 	  received_neighbour_channel_availability[i] = new bool[11]();
 
   sent_neighbour_channel_availability = new bool[11]();
@@ -284,8 +289,9 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 				std::cout << received_neighbour_channel_availability[ptpt.sending_node_id][j] << std::endl;*/
 			//for(int j=0;j<11;j++)
 				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
-			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
-			neighbour_status_array[ptpt.sending_node_id]=ptpt.received_color;
+			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id << " with Status: " << ptpt.received_color);
+			if (neighbour_status_array[ptpt.sending_node_id]==-1)
+				neighbour_status_array[ptpt.sending_node_id]=ptpt.received_color;
 			ConnectedNodeStatus[ptpt.sending_node_id]=true;
 			link_co(ptpt.sending_node_id, snrval);
 		}
@@ -510,6 +516,8 @@ void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
   if (current_receive_color==-1 )
   {
 	  current_receive_color = (int) server_CAT_received[this->GetNode()->GetId()];
+	  if (current_receive_color<20)
+		  m_spectrumManager->SetBsyncColor(current_receive_color);
 	  std::cout << "Current Receive Color for Node: " << this->GetNode()->GetId() << " is: " << current_receive_color << std::endl;
   }
 
@@ -570,15 +578,19 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 		if (Simulator::Now ().GetSeconds () < stop_time)
 		{
 			//socket->Cleanup();
-			//socket->Connect (current_Sending_IP);//InetSocketAddress (current_Sending_IP,9)
+			socket->Connect (InetSocketAddress (current_Sending_IP,9));//InetSocketAddress (current_Sending_IP,9)
 
-			socket->SendTo (data, 0, current_Sending_IP);//Ipv4Address ("255.255.255.255")
+			//socket->SendTo (data, 0, current_Sending_IP);//Ipv4Address ("255.255.255.255")
+
+			socket->Send(data);
+
 			++m_sent;
 			NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s Server sent " << m_size << " bytes to " <<
 			current_Sending_IP << " port " << m_port << " with content " << ((BsyncData*) buffer)->type << " with timestamp: " << (double)((BsyncData*) buffer)->s_sent_ts);
 		    //Simulator::Schedule (Seconds(period+0.0000001), &Bsync_Server::transmitasONF, this, socket);//period+0.0000001
 		}
 	}
+	timestamp = timestamp + period;
 	Simulator::Schedule (Seconds (period*1.0), &Bsync_Server::transmitasONF, this, socket);
 }
 
@@ -586,9 +598,11 @@ void
 Bsync_Server::StopApplication ()
 {
   NS_LOG_FUNCTION (this);
-  NS_LOG_INFO(m_spectrumManager->IsChannelAvailable());
+  //NS_LOG_INFO(m_spectrumManager->IsChannelAvailable());
   //Ptr<WifiNetDevice> wd = DynamicCast<WifiNetDevice> (this->GetNode()->GetDevice(0));
   //wd->GetMac();
+  if (timestamp > stop_time)
+	  timestamp = timestamp - period;
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "had final Timestamp: " << timestamp);
 
@@ -683,7 +697,8 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 		  }
 		  NS_LOG_INFO("Current value of internal timer is: " << internal_timer);
 
-          timestamp = ((BsyncData*) buffer)->s_sent_ts;
+          if (((BsyncData*) buffer)->s_sent_ts>timestamp)
+        	  timestamp = ((BsyncData*) buffer)->s_sent_ts;
           //NS_LOG_UNCOND("Round: " << m_period_count << " of ON with Node ID: " << this->GetNode()->GetId() << " Current TimeStamp Value: " << timestamp);
           //NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
           m_period_count+=1;

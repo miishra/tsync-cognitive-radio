@@ -147,6 +147,8 @@ public:
 
 	std::vector<int> GetListofFreeChannels();
 
+	void SetBsyncColor(int color_this_node);
+
 private:
 
 	// Spectrum Cycle Timers and Variables

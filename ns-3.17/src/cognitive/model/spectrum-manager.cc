@@ -308,6 +308,12 @@ int SpectrumManager::GetTotalFreeChannelsNow()
 	return no_free_channels;
 }
 
+void SpectrumManager::SetBsyncColor(int color_this_node)
+{
+	//m_wifiPhy->SetChannelNumber(color_this_node);
+	m_repository->SetRxChannel(m_nodeId, color_this_node);
+}
+
 
 
 //TransmitEnded: the CR stops transmitting, and starts sensing for PU detection
