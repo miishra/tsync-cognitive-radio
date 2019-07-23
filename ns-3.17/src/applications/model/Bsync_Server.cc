@@ -150,7 +150,7 @@ void Bsync_Server::color_conflict()
   {
 	  if (get<0>(nodeid_status[i])!=m_self_node_id)
 	  {
-		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true && (neighbour_status_array[get<0>(nodeid_status[i])]==-1))
+		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true ) //(neighbour_status_array[get<0>(nodeid_status[i])]==-1)
 		  {
 			  vector<int>::iterator randIt = available_colors.begin();
 			  std::advance(randIt, std::rand() %available_colors.size());
@@ -570,7 +570,7 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 		if (Simulator::Now ().GetSeconds () < stop_time)
 		{
 			//socket->Cleanup();
-			//socket->Connect (InetSocketAddress (current_Sending_IP,9));
+			//socket->Connect (current_Sending_IP);//InetSocketAddress (current_Sending_IP,9)
 
 			socket->SendTo (data, 0, current_Sending_IP);//Ipv4Address ("255.255.255.255")
 			++m_sent;
