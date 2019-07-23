@@ -186,6 +186,27 @@ RoutingTableEntry::Print (Ptr<OutputStreamWrapper> stream) const
   std::setiosflags (std::ios::left) << std::setprecision (2) <<
   std::setw (14) << (m_lifeTime - Simulator::Now ()).GetSeconds ();
   *os << "\t" << m_hops << "\n";
+  //std::vector<Ipv4Address> rout_table;
+}
+
+Ipv4Address RoutingTableEntry::GetRoutingVector () const
+{
+	if (m_flag==VALID)
+		return m_ipv4Route->GetDestination ();
+	else
+		return Ipv4Address("255.255.255.255");
+}
+
+std::vector<Ipv4Address> RoutingTable::GetRoutingVector () const
+{
+	std::vector<Ipv4Address> reachableAddresses;
+	std::map<Ipv4Address, RoutingTableEntry> table = m_ipv4AddressEntry;
+	Purge (table);
+	for (std::map<Ipv4Address, RoutingTableEntry>::const_iterator i = table.begin (); i != table.end (); ++i)
+	{
+	    reachableAddresses.push_back(i->second.GetRoutingVector ());
+	}
+	return reachableAddresses;
 }
 
 /*

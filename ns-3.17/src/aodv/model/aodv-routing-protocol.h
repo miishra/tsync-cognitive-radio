@@ -86,6 +86,7 @@ public:
   virtual void NotifyRemoveAddress (uint32_t interface, Ipv4InterfaceAddress address);
   virtual void SetIpv4 (Ptr<Ipv4> ipv4);
   virtual void PrintRoutingTable (Ptr<OutputStreamWrapper> stream) const;
+  virtual std::vector<Ipv4Address> GetRoutingNodesAt (Ptr<Node> node) const;
   void SetRepository(Ptr<Repository> repo);
   /// Send hello
   void SendHello ();
@@ -124,6 +125,8 @@ public:
   TracedCallback<Ipv4Address, int, bool **> m_MyHelloReceiveCallbackClient;
 
   TracedCallback<uint8_t*> m_ReceivedCATCallback_Server;
+
+  TracedCallback<std::vector<Ipv4Address>, int> m_RoutingNodesReceiveCallback;
 
 private:
   ///\name Protocol parameters.

@@ -145,6 +145,7 @@ public:
     return (m_ipv4Route->GetDestination () == dst);
   }
   void Print (Ptr<OutputStreamWrapper> stream) const;
+  Ipv4Address GetRoutingVector () const;
 
 private:
   /// Valid Destination Sequence Number flag
@@ -249,6 +250,7 @@ public:
   bool MarkLinkAsUnidirectional (Ipv4Address neighbor, Time blacklistTimeout);
   /// Print routing table
   void Print (Ptr<OutputStreamWrapper> stream) const;
+  std::vector<Ipv4Address> GetRoutingVector () const;
 
 private:
   std::map<Ipv4Address, RoutingTableEntry> m_ipv4AddressEntry;

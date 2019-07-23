@@ -55,6 +55,14 @@ Ipv4RoutingHelper::PrintRoutingTableAt (Time printTime, Ptr<Node> node, Ptr<Outp
   Simulator::Schedule (printTime, &Ipv4RoutingHelper::Print, this, node, stream);
 }
 
+/*std::vector<Ipv4Address> GetRoutingNodesAt (Ptr<Node> node) const
+{
+	Ptr<Ipv4> ipv4 = node->GetObject<Ipv4> ();
+	Ptr<Ipv4RoutingProtocol> rp = ipv4->GetRoutingProtocol ();
+	NS_ASSERT (rp);
+	return rp->GetRoutingNodesAt (node);
+}*/
+
 void
 Ipv4RoutingHelper::PrintRoutingTableEvery (Time printInterval,Ptr<Node> node, Ptr<OutputStreamWrapper> stream) const
 {

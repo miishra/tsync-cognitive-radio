@@ -95,6 +95,8 @@ public:
    */
   void PrintRoutingTableAt (Time printTime, Ptr<Node> node, Ptr<OutputStreamWrapper> stream) const;
 
+  //std::vector<Ipv4Address> GetRoutingNodesAt (Ptr<Node> node) const;
+
   /**
    * \brief prints the routing tables of a node at regular intervals specified by user.
    * \param printInterval the time interval for which the routing table is supposed to be printed.

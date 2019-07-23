@@ -154,6 +154,8 @@ public:
    */
   virtual void PrintRoutingTable (Ptr<OutputStreamWrapper> stream) const = 0;
 
+  //virtual std::vector<Ipv4Address> GetRoutingNodesAt (Ptr<Node> node) const = 0;
+
   /**
    * \brief Set cognitive radio repository
    *

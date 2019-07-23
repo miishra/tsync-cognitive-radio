@@ -48,41 +48,15 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("Bsync_ServerApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Server);
 
-Conflict_G_Loc ConflictG(10,2);
-bool *ConnectedNodeStatus;
-
 std::map<Ipv4Address, int> ip_nodeid_hash_client;
 
-Conflict_G_Loc::Conflict_G_Loc (int num_su, int num_pu)
-{
-  NS_LOG_FUNCTION (this);
-  no_su=num_su;
-  no_pu=num_pu;
-  ConnectedNodeStatus = new bool[num_su+num_pu]();
-  current_depth=0;
-  allotted_colors = new int[num_su]();
-  array_link_co= new double[num_su]();
-  array_link_adj= new double[num_su]();
-  array_node_wt=0;
-  array_net_T=0;
-  opt_net_T=0;
-  array_net_Intf=0;
-  opt_net_Intf=0;
-  m_specManager=Bsync_Server::m_spectrumManager;
-}
-
-Conflict_G_Loc::~Conflict_G_Loc ()
-{
-  NS_LOG_FUNCTION (this);
-}
-
-void Conflict_G_Loc::calc_node_t()
+void Bsync_Server::calc_node_t()
 {
   NS_LOG_FUNCTION (this);
   double* array_node_wt = new double [no_su];
   for (int i=0;i<no_su;i++)
   {
-	  std::vector<int> free_channels = m_specManager->GetListofFreeChannels();
+	  std::vector<int> free_channels = m_spectrumManager->GetListofFreeChannels();
 	  int tot_aval_channels = free_channels.size();
 	  /*for(int n : free_channels)
 		  std::cout << n << '\n';*/
@@ -94,7 +68,7 @@ void Conflict_G_Loc::calc_node_t()
   //NS_LOG_INFO(m_specManager->m_repository->m_count);
 }
 
-void Conflict_G_Loc::link_co(int node_id, double snrval)
+void Bsync_Server::link_co(int node_id, double snrval)
 {
   NS_LOG_FUNCTION (this);
   array_link_co[node_id]=1/snrval;
@@ -104,7 +78,7 @@ void Conflict_G_Loc::link_co(int node_id, double snrval)
   cout << endl;*/
 }
 
-void Conflict_G_Loc::conflict(Ptr<Node> current_node)
+void Bsync_Server::conflict(Ptr<Node> current_node)
 {
   NS_LOG_FUNCTION (this);
 
@@ -113,45 +87,14 @@ void Conflict_G_Loc::conflict(Ptr<Node> current_node)
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
   Ipv4GlobalRoutingHelper g;
-  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (to_string(current_node->GetId()) + "dynamic-global-routing.routes", std::ios::out);
+  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (to_string(current_node->GetId()) + "dynamic-global-routing.txt", std::ios::out);
   g.PrintRoutingTableAt (Seconds (0.0), current_node, routingStream);
 
-  std::ifstream infile(to_string(current_node->GetId()) + "dynamic-global-routing.routes");
+  for (int i=0;i<tot_su;i++)
+	  ConnectedNodeStatus[i]=false;
 
-  std::string line;
-  int current_node_id=-1, line_count=1, hop_count;
-  std::string dest_ip, link_status, gen_string, delim="\t";
-  while (std::getline(infile, line))
-  {
-  	std::istringstream iss(line);
-  	/*if (!(iss >> gen_string))
-  	{
-  		break;
-  	}*/
-  	//std::cout << line << endl;
-  	if (line_count>3)
-  	{
-  		size_t pos = 0;
-  		std::string token;
-  		int place=1;
-  		while ((pos = line.find(delim)) != std::string::npos) {
-  		    token = line.substr(0, pos);
-  		    if (place==1)
-  		    	dest_ip.assign(token);
-  		    else if (place==4)
-  		    	link_status.assign(token);
-  		    else if (place==6)
-  		    	hop_count=stoi(token);
-  		    line.erase(0, pos + delim.length());
-  		    place++;
-  		}
-  	}
-  	line_count++;
-  	if (link_status.compare("UP")==0 && hop_count==1)
-  	{
-  		ConnectedNodeStatus[ip_nodeid_hash_client[Ipv4Address(dest_ip.c_str())]]=true;
-  	}
-  }
+  for (int i=0;i<Routing_Nodes.size();i++)
+      ConnectedNodeStatus[ip_nodeid_hash_client[Routing_Nodes[i]]]=true;
 
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   std::cout << "In the Conflict Graph, Following nodes are connected at Server: " << current_node->GetId() << std::endl;
@@ -164,7 +107,7 @@ void Conflict_G_Loc::conflict(Ptr<Node> current_node)
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
   if (ref_node_id>-1)
-	  ConflictG.color_conflict();
+	  color_conflict();
 }
 
 bool sortbysec(const tuple<int, double> &a,
@@ -173,7 +116,7 @@ bool sortbysec(const tuple<int, double> &a,
     return (get<1>(a) > get<1>(b));
 }
 
-void Conflict_G_Loc::color_conflict()
+void Bsync_Server::color_conflict()
 {
   NS_LOG_FUNCTION (this);
   std::vector<int> available_colors;
@@ -246,7 +189,7 @@ Bsync_Server::GetTypeId (void)
                    MakeUintegerChecker<uint16_t> ())
 	.AddTraceSource ("SetSpecAODVCallback"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&Bsync_Server::m_SetSpecAODVCallback))
-   .AddTraceSource ("SetAllottedColorsCallbackServer"," pass parameters to AODV ",
+    .AddTraceSource ("SetAllottedColorsCallbackServer"," pass parameters to AODV ",
 				   MakeTraceSourceAccessor (&Bsync_Server::m_SetAllottedColorsCallback_Server))
    /*.AddAttribute ("Node ID", "ID of node on which this sever application is installed.",
 					  UintegerValue (1000),
@@ -293,6 +236,21 @@ Bsync_Server::Bsync_Server ()
   server_CAT = new uint8_t[tot_su]();
   server_CAT_received = new uint8_t[tot_su]();
 
+  ConnectedNodeStatus = new bool[tot_su]();//num_su+num_pu
+
+
+  no_su=10;
+  no_pu=2;
+  current_depth=0;
+  allotted_colors = new int[no_su]();
+  array_link_co= new double[no_su]();
+  array_link_adj= new double[no_su]();
+  array_node_wt=0;
+  array_net_T=0;
+  opt_net_T=0;
+  array_net_Intf=0;
+  opt_net_Intf=0;
+
   //cout << internal_timer << endl;
 }
 
@@ -329,7 +287,7 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
 			neighbour_status_array[ptpt.sending_node_id]=ptpt.received_color;
 			ConnectedNodeStatus[ptpt.sending_node_id]=true;
-			ConflictG.link_co(ptpt.sending_node_id, snrval);
+			link_co(ptpt.sending_node_id, snrval);
 		}
 		//TypeHeader tHeader (AODVTYPE_RREQ);
 		//packet->RemoveHeader(tHeader);
@@ -354,6 +312,7 @@ void
 Bsync_Server::MyFunction(SpectrumManager * sm)
 {
   NS_LOG_FUNCTION (this);
+  //std::cout << Bsync_Server::Routing_Nodes.size() << std::endl;
   m_spectrumManager=sm;
 
   if (!isSMupdated)
@@ -361,6 +320,13 @@ Bsync_Server::MyFunction(SpectrumManager * sm)
 	  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, ref_node_id);
   }
 
+}
+
+std::vector<Ipv4Address>
+Bsync_Server::fetchReoutingNodes()
+{
+  NS_LOG_FUNCTION (this);
+  return Routing_Nodes;
 }
 
 void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** received_status_array)
@@ -410,6 +376,11 @@ Bsync_Server::StartApplication (void)
   oss.clear();
   oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/ReceivedCATCallbackServer";
   Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::receivedCAT,this));
+
+  oss.str("");
+  oss.clear();
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/RoutingNodesCallbackServer";
+  Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Server::GetRoutingTable,this));
 
   if (m_socket == 0)
     {
@@ -500,19 +471,20 @@ void Bsync_Server::reachedT(Ptr<Socket> socket)
 void Bsync_Server::startCG()
 {
   NS_LOG_FUNCTION (this);
-  //ConflictG = Conflict_G_Loc(3, 2);
+
+  //ConflictG = ConflictG(10,2);
+
   m_free_channels_list = m_spectrumManager->GetListofFreeChannels();
+  //std::cout << "here" << '\n';
   int tot_free_channels = m_free_channels_list.size();
   for(int i = 0; i < tot_free_channels; i++)
   {
 	  sent_neighbour_channel_availability[m_free_channels_list[i]]=true;
   }
   m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, ref_node_id);
-  //for(int n : free_channels)
-	  //std::cout << n << '\n';
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
   if (tot_free_channels!=0)
-	  ConflictG.array_node_wt = 1/(tot_free_channels*1.0);
+	  array_node_wt = 1/(tot_free_channels*1.0);
   //NS_LOG_UNCOND(ConflictG.array_node_wt);
 
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
@@ -523,7 +495,7 @@ void Bsync_Server::startCG()
 
   if (ref_node_id>-1)
   {
-	  ConflictG.conflict(this->GetNode());
+	  conflict(this->GetNode());
 
 	  m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
   }
@@ -545,6 +517,20 @@ void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
   {
 	  std::cout << (int) server_CAT_received[i] << '\n';
   }*/
+}
+
+void Bsync_Server::GetRoutingTable(std::vector<Ipv4Address> received_Routing_Nodes, int node_id)
+{
+	NS_LOG_FUNCTION (this);
+	if (node_id==this->GetNode()->GetId() && Routing_Nodes.size()==0)
+	{
+		//std::cout << "At: " << Simulator::Now ().GetSeconds () << " Received Routing Nodes at Node: " << node_id << std::endl;
+		Routing_Nodes=received_Routing_Nodes;
+		/*for (int i=0;i<Routing_Nodes.size();i++)
+			std::cout << "Connected to Node: " << Routing_Nodes[i] << "\t";
+		std::cout << std::endl;*/
+
+	}
 }
 
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)

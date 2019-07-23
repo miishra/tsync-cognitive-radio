@@ -102,14 +102,17 @@ SpectrumManager::IsPuInterfering(Time txDuration) {
 	int  current_channel=m_repository->GetRxChannel(m_nodeId);
 	bool interference=m_sensingMod->GetSenseResultsFuture(m_nodeId,time_tx,m_transmitTime, current_channel);
 
-#ifdef SENSING_VERBOSE_MODE
+/*#ifdef SENSING_VERBOSE_MODE
 	if (interference)
 	  {
 	    char buffer [50];
 	    std::sprintf(buffer, "[SENSING-DBG] Node %d sensed some PU activity on channel %d while receiving data\n", m_nodeId,current_channel);
 	    NS_LOG_DEBUG (buffer);
 	  }
-#endif
+#endif*/
+
+	//std::cout << m_nodeId << time_tx << m_transmitTime << current_channel << std::endl;
+
 	return interference;
 }
 
@@ -252,6 +255,7 @@ std::vector<int> SpectrumManager::GetListofFreeChannels()
 			NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << i); //current_channel
 
 			current_channel_state=IsPuInterfering(m_transmitTime);
+
 			if (!current_channel_state)
 			{
 				no_free_channels++;

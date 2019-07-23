@@ -178,6 +178,8 @@ RoutingProtocol::GetTypeId (void)
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_sendRoutingTableCallbackClient))
 	.AddTraceSource ("HelloReceiveCallback"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallback))
+	.AddTraceSource ("RoutingNodesCallbackServer"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&RoutingProtocol::m_RoutingNodesReceiveCallback))
 	.AddTraceSource ("HelloReceiveCallbackClient"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallbackClient))
    .AddTraceSource ("ReceivedCATCallbackServer"," Send Received CAT to the Server ",
@@ -338,6 +340,12 @@ RoutingProtocol::PrintRoutingTable (Ptr<OutputStreamWrapper> stream) const
 {
   *stream->GetStream () << "Node: " << m_ipv4->GetObject<Node> ()->GetId () << " Time: " << Simulator::Now ().GetSeconds () << "s ";
   m_routingTable.Print (stream);
+}
+
+std::vector<Ipv4Address>
+RoutingProtocol::GetRoutingNodesAt (Ptr<Node> node) const
+{
+  return m_routingTable.GetRoutingVector ();
 }
 
 int64_t
@@ -1764,6 +1772,9 @@ void
 RoutingProtocol::SendHello ()
 {
   NS_LOG_FUNCTION (this);
+
+  m_RoutingNodesReceiveCallback(GetRoutingNodesAt(m_ipv4->GetObject <Node>()), m_ipv4->GetObject <Node>()->GetId());
+
   /* Broadcast a RREP with TTL = 1 with the RREP message fields set as follows:
    *   Destination IP Address         The node's IP address.
    *   Destination Sequence Number    The node's latest sequence number.

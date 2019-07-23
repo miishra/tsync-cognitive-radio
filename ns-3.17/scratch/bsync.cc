@@ -79,11 +79,11 @@ int main (int argc, char *argv[])
 
   // Position our nodes with 110 m in between
   Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
-  double start = 110.0;
+  double start = 0.0;
   for (int i=0; i<nNodes; i++)
   {
   	  positionAlloc->Add (Vector (start, 0.0, 0.0));
-  	  start = start+10;//20
+  	  start = start+5;//20
   }
   mobility.SetPositionAllocator (positionAlloc);
 

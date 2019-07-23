@@ -36,7 +36,11 @@ public:
   uint8_t* server_CAT;
   uint8_t* server_CAT_received;
 
+  bool *ConnectedNodeStatus;
+
   std::vector<int> server_Vector;
+
+  std::vector<Ipv4Address> Routing_Nodes;
 
   TracedCallback<uint8_t*, int> m_SetAllottedColorsCallback_Server;
 
@@ -45,6 +49,29 @@ public:
 
   void reachedT(Ptr<Socket> socket);
   void transmitasONF(Ptr<Socket> socket);
+
+  void GetRoutingTable(std::vector<Ipv4Address> received_Routing_Nodes, int node_id);
+  std::vector<Ipv4Address> fetchReoutingNodes();
+
+  int no_su;
+  int no_pu;
+  int current_depth;
+  double* array_link_co;
+  double* array_link_adj;
+  double array_node_wt;
+  int* allotted_colors;
+  double array_net_T;
+  double opt_net_T;
+  double array_net_Intf;
+  double opt_net_Intf;
+  void calc_node_t();
+  void Obj();
+  void link_co(int node_id, double snrval);
+  void link_adj();
+  double calc_backoff_cond();
+  void exec_backoff_app();
+  void conflict(Ptr<Node> current_node);
+  void color_conflict();
 
 protected:
   virtual void DoDispose (void);
@@ -62,8 +89,8 @@ private:
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<SpectrumManager *, bool *, int> m_SetSpecAODVCallback;
   TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback;
+  TracedCallback<std::vector<Ipv4Address>, int> m_RoutingNodesReceiveCallback;
   void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array);
-  void GetRoutingTable();
 
   uint16_t m_port;
   int tot_su;
@@ -86,41 +113,6 @@ private:
   int ref_flag;
   EventId m_event;
   //RoutingTable m_routingTableApp;
-};
-
-class Conflict_G_Loc : public Bsync_Server, public Application
-{
-public:
-	Conflict_G_Loc(int num_su, int num_pu);
-	~Conflict_G_Loc();
-	void get_current_round();
-	void get_no_su();
-	void set_no_su();
-	void get_no_pu();
-	void set_no_pu();
-	int no_su;
-	int no_pu;
-	int current_depth;
-	double* array_link_co;
-	double* array_link_adj;
-	double array_node_wt;
-	int* allotted_colors;
-	double array_net_T;
-	double opt_net_T;
-	double array_net_Intf;
-	double opt_net_Intf;
-	SpectrumManager *m_specManager;
-	void calc_node_t();
-	void Obj();
-    void link_co(int node_id, double snrval);
-    void link_adj();
-    double calc_backoff_cond();
-    void exec_backoff_app();
-    void conflict(Ptr<Node> current_node);
-    void color_conflict();
-private:
-    void get_next_heuristic();
-    void stop_current_round();
 };
 
 } // namespace ns3

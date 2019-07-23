@@ -73,6 +73,8 @@ public:
    */
   void FlushGlobalNixRoutingCache (void);
 
+  //virtual std::vector<Ipv4Address> GetRoutingNodesAt (Ptr<Node> node) const;
+
 private:
   /* flushes the cache which stores nix-vector based on
    * destination IP */
