@@ -6,10 +6,12 @@
 
 namespace ns3 {
 
-Bsync_ServerHelper::Bsync_ServerHelper (uint16_t port)
+Bsync_ServerHelper::Bsync_ServerHelper (uint16_t port, double simulation_duration, int total_su)
 {
   m_factory.SetTypeId (Bsync_Server::GetTypeId ());
   SetAttribute ("Port", UintegerValue (port));
+  SetAttribute ("SimulationDuration", DoubleValue (simulation_duration));
+  SetAttribute ("TotalSU", IntegerValue (total_su));
 }
 
 void
@@ -62,11 +64,13 @@ Bsync_ClientHelper::Bsync_ClientHelper (Address address, uint16_t port)
   SetAttribute ("RemotePort", UintegerValue (port));
 }
 
-Bsync_ClientHelper::Bsync_ClientHelper (Ipv4Address address, uint16_t port)
+Bsync_ClientHelper::Bsync_ClientHelper (Ipv4Address address, uint16_t port, double simulation_duration, int total_su)
 {
   m_factory.SetTypeId (Bsync_Client::GetTypeId ());
   SetAttribute ("RemoteAddress", AddressValue (Address(address)));
   SetAttribute ("RemotePort", UintegerValue (port));
+  SetAttribute ("SimulationDurationClient", DoubleValue (simulation_duration));
+  SetAttribute ("TotalSUClient", IntegerValue (total_su));
 }
 
 Bsync_ClientHelper::Bsync_ClientHelper (Ipv6Address address, uint16_t port)

@@ -20,7 +20,7 @@ public:
    *
    * \param port The port the server will wait on for incoming packets
    */
-  Bsync_ServerHelper (uint16_t port);
+  Bsync_ServerHelper (uint16_t port, double simulation_duration, int total_su);
 
   /**
    * Record an attribute to be set in each Application after it is is created.
@@ -86,7 +86,7 @@ public:
    * \param port The port number of the remote udp echo server
    */
   Bsync_ClientHelper (Address ip, uint16_t port);
-  Bsync_ClientHelper (Ipv4Address ip, uint16_t port);
+  Bsync_ClientHelper (Ipv4Address ip, uint16_t portm, double simulation_duration, int total_su);
   Bsync_ClientHelper (Ipv6Address ip, uint16_t port);
 
   /**

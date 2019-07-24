@@ -270,6 +270,16 @@ Bsync_Client::GetTypeId (void)
                    UintegerValue (100),
                    MakeUintegerAccessor (&Bsync_Client::m_count),
                    MakeUintegerChecker<uint32_t> ())
+   .AddAttribute ("SimulationDurationClient",
+					  "Total duration of the Simulation",
+					  DoubleValue (20),
+					  MakeDoubleAccessor (&Bsync_Client::stop_time),
+					  MakeDoubleChecker<double> ())
+  .AddAttribute ("TotalSUClient",
+					 "Total Number of Secondary Users.",
+					 IntegerValue (10),
+					 MakeIntegerAccessor (&Bsync_Client::tot_su),
+					 MakeIntegerChecker<int> ())
     .AddAttribute ("Interval",
                    "The time to wait between packets",
                    TimeValue (Seconds (1.0)),
@@ -313,7 +323,7 @@ Bsync_Client::Bsync_Client ()
   m_status = false;
   period=1;
   m_period_count=1;
-  stop_time=20.0;
+  //stop_time=20.0;
 
   ref_node_id=-1;
   last_internal_timer_val=0;
@@ -322,28 +332,7 @@ Bsync_Client::Bsync_Client ()
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
 
-  tot_su=10;
-
-  neighbour_status_array_client = new int[tot_su]();
-  received_neighbour_channel_availability = new bool*[tot_su]();
-  for(int i = 0; i < tot_su; i++)
-	  received_neighbour_channel_availability[i] = new bool[11]();
-
-  sent_neighbour_channel_availability = new bool[11]();
-
-  no_su=tot_su;
-  no_pu=2;
-  ConnectedNodeStatus_Client = new bool[tot_su+2]();
-  current_depth=0;
-  client_CAT = new uint8_t[tot_su]();
-  array_link_co= new double[tot_su]();
-  array_link_adj= new double[tot_su]();
-  array_node_wt=0;
-  array_net_T=0;
-  opt_net_T=0;
-  array_net_Intf=0;
-  opt_net_Intf=0;
-  current_client_receive_color=-1;
+  //tot_su=10;
 
 }
 
@@ -477,6 +466,27 @@ Bsync_Client::StartApplication (void)
   NS_LOG_FUNCTION (this);
 
   std::cout << "Client App started at Node: " << this->GetNode()->GetId() << std::endl;
+
+  neighbour_status_array_client = new int[tot_su]();
+  received_neighbour_channel_availability = new bool*[tot_su]();
+  for(int i = 0; i < tot_su; i++)
+    received_neighbour_channel_availability[i] = new bool[11]();
+
+  sent_neighbour_channel_availability = new bool[11]();
+
+  no_su=tot_su;
+  no_pu=2;
+  ConnectedNodeStatus_Client = new bool[tot_su+2]();
+  current_depth=0;
+  client_CAT = new uint8_t[tot_su]();
+  array_link_co= new double[tot_su]();
+  array_link_adj= new double[tot_su]();
+  array_node_wt=0;
+  array_net_T=0;
+  opt_net_T=0;
+  array_net_Intf=0;
+  opt_net_Intf=0;
+  current_client_receive_color=-1;
 
   m_self_node_id_client=this->GetNode()->GetId();
   Ptr<Ipv4> ipv4 = this->GetNode()->GetObject<Ipv4> ();

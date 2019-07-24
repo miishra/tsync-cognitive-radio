@@ -22,11 +22,11 @@ int main (int argc, char *argv[])
 
   SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
-  int nNodes = 10;
+  int nNodes = 20;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   NS_LOG_UNCOND("Number of Nodes in the Scenario: " << nNodes << "\n\n");
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
-  double simulation_duration=20.0;
+  double simulation_duration=10.0;
 
   CommandLine cmd;
 
@@ -83,7 +83,7 @@ int main (int argc, char *argv[])
   for (int i=0; i<nNodes; i++)
   {
   	  positionAlloc->Add (Vector (start, 0.0, 0.0));
-  	  start = start+10;//20
+  	  start = start+10;//10
   }
   mobility.SetPositionAllocator (positionAlloc);
 
@@ -140,7 +140,11 @@ int main (int argc, char *argv[])
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
   uint16_t port = 9;  // well-known echo port number
-  Bsync_ServerHelper server (port);
+
+  //Config::Set ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Server/TotalSU", IntegerValue(nNodes));
+  //Config::Set ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Server/TotalSU", DoubleValue(simulation_duration));
+
+  Bsync_ServerHelper server (port, simulation_duration, nNodes);
   ApplicationContainer apps;
   for(int i=1;i<c.GetN();i++)
   {
@@ -156,7 +160,7 @@ int main (int argc, char *argv[])
   uint32_t packetSize = 1024;
   uint32_t maxPacketCount = 2;
   Time interPacketInterval = Seconds (1.);
-  Bsync_ClientHelper client (Ipv4Address ("1.1.1.1"), port);//problem setting specific ip
+  Bsync_ClientHelper client (Ipv4Address ("1.1.1.1"), port, simulation_duration, nNodes);//problem setting specific ip
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interPacketInterval));
   client.SetAttribute ("PacketSize", UintegerValue (packetSize));

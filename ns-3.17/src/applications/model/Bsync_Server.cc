@@ -207,9 +207,17 @@ Bsync_Server::GetTypeId (void)
                    UintegerValue (9),
                    MakeUintegerAccessor (&Bsync_Server::m_port),
                    MakeUintegerChecker<uint16_t> ())
-	.AddTraceSource ("SetSpecAODVCallback"," pass parameters to application ",
+   .AddAttribute ("SimulationDuration", "Total duration of the Simulation",
+					  DoubleValue (20),
+					  MakeDoubleAccessor (&Bsync_Server::stop_time),
+					  MakeDoubleChecker<double> ())
+   .AddAttribute ("TotalSU", "Total Number of Secondary Users.",
+					 IntegerValue (10),
+					 MakeIntegerAccessor (&Bsync_Server::tot_su),
+					 MakeIntegerChecker<int> ())
+   .AddTraceSource ("SetSpecAODVCallback"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&Bsync_Server::m_SetSpecAODVCallback))
-    .AddTraceSource ("SetAllottedColorsCallbackServer"," pass parameters to AODV ",
+   .AddTraceSource ("SetAllottedColorsCallbackServer"," pass parameters to AODV ",
 				   MakeTraceSourceAccessor (&Bsync_Server::m_SetAllottedColorsCallback_Server))
    /*.AddAttribute ("Node ID", "ID of node on which this sever application is installed.",
 					  UintegerValue (1000),
@@ -230,7 +238,7 @@ Bsync_Server::Bsync_Server ()
   timestamp= x->GetValue();
   m_period_count=1;
   ref_node_id=-1;
-  stop_time=20.0;
+  //stop_time=20.0;
   last_internal_timer_val=0;
   last_internal_timer_update=0;
   m_sent=0;
@@ -239,41 +247,7 @@ Bsync_Server::Bsync_Server ()
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
 
-  tot_su=10;
-
-  received_neighbour_channel_availability = new bool*[tot_su]();
-  neighbour_status_array = new int[tot_su]();
-  for(int i = 0; i < tot_su; i++)
-	  neighbour_status_array[i]=-1;
-  for(int i = 0; i < tot_su; i++)
-	  received_neighbour_channel_availability[i] = new bool[11]();
-
-  sent_neighbour_channel_availability = new bool[11]();
-  for(int i = 0; i < 11; i++)
-	  sent_neighbour_channel_availability[i]=1;
-
-  current_receive_color=-1;
-  current_send_color=-1;
-
-  m_self_node_id=-1;
-
-  server_CAT = new uint8_t[tot_su]();
-  server_CAT_received = new uint8_t[tot_su]();
-
-  ConnectedNodeStatus = new bool[tot_su]();//num_su+num_pu
-
-
-  no_su=10;
-  no_pu=2;
-  current_depth=0;
-  allotted_colors = new int[no_su]();
-  array_link_co= new double[no_su]();
-  array_link_adj= new double[no_su]();
-  array_node_wt=0;
-  array_net_T=0;
-  opt_net_T=0;
-  array_net_Intf=0;
-  opt_net_Intf=0;
+  //tot_su=10;
 
   //cout << internal_timer << endl;
 }
@@ -376,9 +350,46 @@ void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** 
 void
 Bsync_Server::StartApplication (void)
 {
+
   NS_LOG_FUNCTION (this);
 
   std::cout << "Server App started at Node: " << this->GetNode()->GetId() << std::endl;
+
+  received_neighbour_channel_availability = new bool*[tot_su]();
+  neighbour_status_array = new int[tot_su]();
+  for(int i = 0; i < tot_su; i++)
+	  neighbour_status_array[i]=-1;
+  for(int i = 0; i < tot_su; i++)
+	  received_neighbour_channel_availability[i] = new bool[11]();
+
+  sent_neighbour_channel_availability = new bool[11]();
+  for(int i = 0; i < 11; i++)
+	  sent_neighbour_channel_availability[i]=1;
+
+  current_receive_color=-1;
+  current_send_color=-1;
+
+  m_self_node_id=-1;
+
+  server_CAT = new uint8_t[tot_su]();
+  server_CAT_received = new uint8_t[tot_su]();
+
+  ConnectedNodeStatus = new bool[tot_su]();//num_su+num_pu
+
+
+  no_su=tot_su;
+  no_pu=2;
+  current_depth=0;
+  allotted_colors = new int[no_su]();
+  array_link_co= new double[no_su]();
+  array_link_adj= new double[no_su]();
+  array_node_wt=0;
+  array_net_T=0;
+  opt_net_T=0;
+  array_net_Intf=0;
+  opt_net_Intf=0;
+
+  //m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
 
   m_self_node_id=this->GetNode()->GetId();
   Ptr<Ipv4> ipv4 = this->GetNode()->GetObject<Ipv4> ();
