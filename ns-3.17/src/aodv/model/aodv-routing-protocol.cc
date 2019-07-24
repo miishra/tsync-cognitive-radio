@@ -157,7 +157,11 @@ RoutingProtocol::RoutingProtocol () :
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
   m_received_channel_availability = new bool*[10];
   for(int i = 0; i < 10; i++)
+  {
 	  m_received_channel_availability[i] = new bool[11]();
+	  for(int j = 0; j < 11; j++)
+		  m_received_channel_availability[i][j]=true;
+  }
 
   m_sent_channel_availability = new bool[11]();
 }

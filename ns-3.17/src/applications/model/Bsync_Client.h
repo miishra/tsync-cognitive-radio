@@ -47,6 +47,37 @@ public:
   void Client_Bsync_Logic();
   void Send (Ptr<Packet> data, int sending_node_id);
 
+  int no_su;
+  int no_pu;
+  int current_depth;
+  double* array_link_co;
+  double* array_link_adj;
+  double array_node_wt;
+  double array_net_T;
+  double opt_net_T;
+  double array_net_Intf;
+  double opt_net_Intf;
+  void calc_node_t();
+  void Obj();
+  void link_co(int node_id, double snrval);
+  void link_adj();
+  double calc_backoff_cond();
+  void exec_backoff_app();
+  void conflict(Ptr<Node> current_node);
+  void color_conflict();
+
+  int m_self_node_id_client=0;
+  bool *ConnectedNodeStatus_Client;
+  uint8_t* client_CAT;
+
+  int current_client_receive_color;
+
+  std::vector<int> childvector;
+
+  std::map<Ipv4Address, int> ip_nodeid_hash;
+
+  Ptr<Socket> m_socket_client;//socket destructor called problem
+
 protected:
   virtual void DoDispose (void);
 
@@ -102,43 +133,6 @@ private:
   int m_period_count;
   /// Callbacks for tracing the packet Tx events
   TracedCallback<Ptr<const Packet> > m_txTrace;
-};
-
-class Conflict_G_Loc_Client : public Bsync_Client, public Application
-{
-public:
-	static TypeId GetTypeId (void);
-	Conflict_G_Loc_Client(int num_su, int num_pu);
-	~Conflict_G_Loc_Client();
-	void get_current_round();
-	void get_no_su();
-	void set_no_su();
-	void get_no_pu();
-	void set_no_pu();
-	int no_su;
-	int no_pu;
-	int current_depth;
-	double* array_link_co;
-	double* array_link_adj;
-	double array_node_wt;
-	double array_net_T;
-	double opt_net_T;
-	double array_net_Intf;
-	double opt_net_Intf;
-	SpectrumManager *m_specManager;
-	void calc_node_t();
-	void Obj();
-    void link_co(int node_id, double snrval);
-    void link_adj();
-    double calc_backoff_cond();
-    void exec_backoff_app();
-    void conflict(Ptr<Node> current_node);
-    void color_conflict();
-    //void ReadCAT();
-    //void AddCAT();
-private:
-    void get_next_heuristic();
-    void stop_current_round();
 };
 
 } // namespace ns3

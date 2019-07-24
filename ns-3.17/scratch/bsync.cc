@@ -83,7 +83,7 @@ int main (int argc, char *argv[])
   for (int i=0; i<nNodes; i++)
   {
   	  positionAlloc->Add (Vector (start, 0.0, 0.0));
-  	  start = start+5;//20
+  	  start = start+10;//20
   }
   mobility.SetPositionAllocator (positionAlloc);
 

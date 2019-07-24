@@ -119,7 +119,14 @@ bool sortbysec(const tuple<int, double> &a,
 void Bsync_Server::color_conflict()
 {
   NS_LOG_FUNCTION (this);
-  std::vector<int> available_colors;
+  int available_colors[no_su][11];
+
+  for(int i=0;i<no_su;i++)
+    {
+  	  for(int j=0;j<11;j++)
+  		  available_colors[i][j]=0;
+    }
+
   std::vector<tuple <int , double>> nodeid_status;
   for(int i=0;i<no_su;i++)
   	  server_CAT[i]=250;
@@ -140,7 +147,7 @@ void Bsync_Server::color_conflict()
 		  		  if (ConnectedNodeStatus[i]==true)
 		  		  {
 		  			  if (received_neighbour_channel_availability[i][j]==sent_neighbour_channel_availability[j])
-		  				  available_colors.push_back(j);
+		  				available_colors[i][j]=1;
 		  		  }
 		  	  }
 	  }
@@ -152,16 +159,26 @@ void Bsync_Server::color_conflict()
 	  {
 		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true && (neighbour_status_array[get<0>(nodeid_status[i])]==-1)) //(neighbour_status_array[get<0>(nodeid_status[i])]==-1)
 		  {
-			  if (available_colors.size()>0)
-			  {
-				  vector<int>::iterator randIt = available_colors.begin();
-				  std::advance(randIt, std::rand() %available_colors.size());
+				  vector<int> avail_colors_this_node;
+				  for(int j=0;j<11;j++)
+				  {
+					  if (available_colors[get<0>(nodeid_status[i])][j])
+						  avail_colors_this_node.push_back(j);
+				  }
+
+				  vector<int>::iterator randIt = avail_colors_this_node.begin();
+				  std::advance(randIt, std::rand() %avail_colors_this_node.size());
+
 				  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
+
 				  //transmitasONF(m_socket, get<0>(nodeid_status[i]));
 				  //cout << *randIt << std::endl;
+
+				  for(int i=0;i<no_su;i++)
+					  available_colors[i][*randIt]=0;
+
 				  server_Vector.push_back(get<0>(nodeid_status[i]));
-				  available_colors.erase(randIt);
-			  }
+				  //avail_colors_this_node.erase(randIt);
 		  }
 	  }
   }
@@ -232,6 +249,8 @@ Bsync_Server::Bsync_Server ()
 	  received_neighbour_channel_availability[i] = new bool[11]();
 
   sent_neighbour_channel_availability = new bool[11]();
+  for(int i = 0; i < 11; i++)
+	  sent_neighbour_channel_availability[i]=1;
 
   current_receive_color=-1;
   current_send_color=-1;

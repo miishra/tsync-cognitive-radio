@@ -47,62 +47,13 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("Bsync_ClientApplication");
 NS_OBJECT_ENSURE_REGISTERED (Bsync_Client);
 
-Conflict_G_Loc_Client ConflictGC(10,2);
-int m_self_node_id_client=0;
-bool *ConnectedNodeStatus_Client;
-uint8_t* client_CAT;
-
-int current_client_receive_color;
-
-std::vector<int> childvector;
-
-std::map<Ipv4Address, int> ip_nodeid_hash;
-
-Ptr<Socket> m_socket_client;//socket destructor called problem
-
-Conflict_G_Loc_Client::Conflict_G_Loc_Client (int num_su, int num_pu)
-{
-  NS_LOG_FUNCTION (this);
-  no_su=num_su;
-  no_pu=num_pu;
-  ConnectedNodeStatus_Client = new bool[num_su+num_pu]();
-  current_depth=0;
-  client_CAT = new uint8_t[num_su]();
-  array_link_co= new double[num_su]();
-  array_link_adj= new double[num_su]();
-  array_node_wt=0;
-  array_net_T=0;
-  opt_net_T=0;
-  array_net_Intf=0;
-  opt_net_Intf=0;
-  current_client_receive_color=-1;
-  m_specManager=Bsync_Client::m_spectrumManager;
-}
-
-/*TypeId
-Conflict_G_Loc_Client::GetTypeId (void)
-{
-  static TypeId tid = TypeId ("ns3::Conflict_G_Loc_Client")
-    .SetParent<Application> ()
-    //.AddConstructor<Conflict_G_Loc_Client(int num_su, int num_pu)> ()
-	.AddTraceSource ("SetAllottedColorsCallbackClient"," pass parameters to AODV ",
-				   MakeTraceSourceAccessor (&Conflict_G_Loc_Client::m_SetAllottedColorsCallback_Client))
-  ;
-  return tid;
-}*/
-
-Conflict_G_Loc_Client::~Conflict_G_Loc_Client ()
-{
-  NS_LOG_FUNCTION (this);
-}
-
-void Conflict_G_Loc_Client::calc_node_t()
+void Bsync_Client::calc_node_t()
 {
   NS_LOG_FUNCTION (this);
   double* array_node_wt = new double [no_su];
   for (int i=0;i<no_su;i++)
   {
-	  std::vector<int> free_channels = m_specManager->GetListofFreeChannels();
+	  std::vector<int> free_channels = m_spectrumManager->GetListofFreeChannels();
 	  int tot_aval_channels = free_channels.size();
 	  /*for(int n : free_channels)
 		  std::cout << n << '\n';*/
@@ -114,7 +65,7 @@ void Conflict_G_Loc_Client::calc_node_t()
   //NS_LOG_INFO(m_specManager->m_repository->m_count);
 }
 
-void Conflict_G_Loc_Client::link_co(int node_id, double snrval)
+void Bsync_Client::link_co(int node_id, double snrval)
 {
   NS_LOG_FUNCTION (this);
   array_link_co[node_id]=1/snrval;
@@ -124,7 +75,7 @@ void Conflict_G_Loc_Client::link_co(int node_id, double snrval)
   cout << endl;*/
 }
 
-/*void Conflict_G_Loc_Client::AddCAT()
+/*void Bsync_Client::AddCAT()
 {
   NS_LOG_FUNCTION (this);
   int client_CAT[no_su];
@@ -132,12 +83,12 @@ void Conflict_G_Loc_Client::link_co(int node_id, double snrval)
 	  client_CAT[i]=-1;
 }
 
-void Conflict_G_Loc_Client::ReadCAT()
+void Bsync_Client::ReadCAT()
 {
   NS_LOG_FUNCTION (this);
 }*/
 
-void Conflict_G_Loc_Client::conflict(Ptr<Node> current_node)
+void Bsync_Client::conflict(Ptr<Node> current_node)
 {
   NS_LOG_FUNCTION (this);
 
@@ -196,7 +147,7 @@ void Conflict_G_Loc_Client::conflict(Ptr<Node> current_node)
   cout << endl;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
-  ConflictGC.color_conflict();
+  color_conflict();
 }
 
 bool sortbysecond(const tuple<int, double> &a,
@@ -205,10 +156,17 @@ bool sortbysecond(const tuple<int, double> &a,
     return (get<1>(a) > get<1>(b));
 }
 
-void Conflict_G_Loc_Client::color_conflict()
+void Bsync_Client::color_conflict()
 {
   NS_LOG_FUNCTION (this);
-  std::vector<int> available_colors;
+  int available_colors[no_su][11];
+
+  for(int i=0;i<no_su;i++)
+  {
+	  for(int j=0;j<11;j++)
+		  available_colors[i][j]=0;
+  }
+
   std::vector<tuple <int , double>> nodeid_status;
   for(int i=0;i<no_su;i++)
 	  client_CAT[i]=250;
@@ -217,8 +175,21 @@ void Conflict_G_Loc_Client::color_conflict()
 	  nodeid_status.push_back(make_tuple(i, array_link_co[i]));
   sort(nodeid_status.begin(), nodeid_status.end(), sortbysecond);
 
+  /*for(int i=0;i<no_su;i++)
+    {
+	  std::cout << "Received neighbour channel availability for Node: " << i << " is:\n";
+  	  for(int j=0;j<11;j++)
+  		std::cout << received_neighbour_channel_availability[i][j] << "\t";
+  	  std::cout << "\n";
+    }*/
+
   //for(int i = 0; i < nodeid_status.size(); i++)
       //std::cout << get<0>(nodeid_status[i]) << " " << get<1>(nodeid_status[i]) << "\n";
+
+  /*std::cout << "Sent channel availability is:\n";
+  for(int i=0;i<no_su;i++)
+	  std::cout << sent_neighbour_channel_availability[i] << "\t";
+  std::cout << "\n";*/
 
   for (int i=0;i<no_su;i++)
   {
@@ -229,11 +200,19 @@ void Conflict_G_Loc_Client::color_conflict()
 		  		  if (ConnectedNodeStatus_Client[i]==true)
 		  		  {
 		  			  if (received_neighbour_channel_availability[i][j]==sent_neighbour_channel_availability[j])
-		  				  available_colors.push_back(j);
+		  				available_colors[i][j]=1;
 		  		  }
 		  	  }
 	  }
   }
+
+  /*for(int i=0;i<no_su;i++)
+        {
+    	  std::cout << "Color availability for Node: " << i << " is:\n";
+      	  for(int j=0;j<11;j++)
+      		std::cout << available_colors[i][j] << "\t";
+      	  std::cout << "\n";
+        }*/
 
   for (int i=0;i<no_su;i++)
   {
@@ -241,14 +220,27 @@ void Conflict_G_Loc_Client::color_conflict()
 	  {
 		  if (ConnectedNodeStatus_Client[get<0>(nodeid_status[i])]==true)//|| (neighbour_status_array_client[get<0>(nodeid_status[i])]==this->GetNode()) (neighbour_status_array_client[get<0>(nodeid_status[i])]==-1)
 		  {
-			  vector<int>::iterator randIt = available_colors.begin();
-			  std::advance(randIt, std::rand() %available_colors.size());
-			  client_CAT[get<0>(nodeid_status[i])]= *randIt;//available_colors.back()
-			  //client_CAT[get<0>(nodeid_status[i])] = *randIt;
+			  vector<int> avail_colors_this_node;
+			  for(int j=0;j<11;j++)
+			  {
+				  if (available_colors[get<0>(nodeid_status[i])][j])
+					  avail_colors_this_node.push_back(j);
+			  }
+
+			  //std::cout << get<0>(nodeid_status[i]) << '\t' << avail_colors_this_node.size() << std::endl;
+
+			  vector<int>::iterator randIt = avail_colors_this_node.begin();
+			  std::advance(randIt, std::rand() %avail_colors_this_node.size());
+
+			  client_CAT[get<0>(nodeid_status[i])]= *randIt;
+
 			  //std::cout << get<0>(nodeid_status[i]) << (int) client_CAT[get<0>(nodeid_status[i])] << std::endl;
-			  available_colors.erase(std::remove(available_colors.begin(), available_colors.end(), *randIt), available_colors.end());
+			  //avail_colors_this_node.erase(std::remove(avail_colors_this_node.begin(), avail_colors_this_node.end(), *randIt), avail_colors_this_node.end());
+
+			  for(int i=0;i<no_su;i++)
+				  available_colors[i][*randIt]=0;
+
 			  childvector.push_back(get<0>(nodeid_status[i]));
-			  //ScheduleCommands (Seconds (0.), get<0>(nodeid_status[i]));
 		  }
 	  }
   }
@@ -338,6 +330,21 @@ Bsync_Client::Bsync_Client ()
 	  received_neighbour_channel_availability[i] = new bool[11]();
 
   sent_neighbour_channel_availability = new bool[11]();
+
+  no_su=tot_su;
+  no_pu=2;
+  ConnectedNodeStatus_Client = new bool[tot_su+2]();
+  current_depth=0;
+  client_CAT = new uint8_t[tot_su]();
+  array_link_co= new double[tot_su]();
+  array_link_adj= new double[tot_su]();
+  array_node_wt=0;
+  array_net_T=0;
+  opt_net_T=0;
+  array_net_Intf=0;
+  opt_net_Intf=0;
+  current_client_receive_color=-1;
+
 }
 
 void Bsync_Client::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm)
@@ -373,7 +380,7 @@ void Bsync_Client::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
 			neighbour_status_array_client[ptpt.sending_node_id]=ptpt.received_color;
 			ConnectedNodeStatus_Client[ptpt.sending_node_id]=true;
-			ConflictGC.link_co(ptpt.sending_node_id, snrval);
+			link_co(ptpt.sending_node_id, snrval);
 		}
 		//TypeHeader tHeader (AODVTYPE_RREQ);
 		//packet->RemoveHeader(tHeader);
@@ -431,6 +438,12 @@ Bsync_Client::MyFunction(SpectrumManager * sm)
   {
 	  Simulator::Schedule (Seconds (0.5), &Bsync_Client::startCG, this);
 	  int client_ref_id=0;
+	  /*m_free_channels_list = m_spectrumManager->GetListofFreeChannels();
+	  int tot_free_channels = m_free_channels_list.size();
+	  for(int i = 0; i < tot_free_channels; i++)
+	  {
+	  	 sent_neighbour_channel_availability[m_free_channels_list[i]]=true;
+	  }*/
 	  m_SetSpecAODVCallback_Client(m_spectrumManager, sent_neighbour_channel_availability, client_ref_id);
   }
 
@@ -442,15 +455,19 @@ void Bsync_Client::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** 
 	//std::cout << source << node_id << " " <<  endl;
 	ip_nodeid_hash[source] = node_id;
 
-	/*ConflictGC.conflict(this->GetNode());
+	/*conflict(this->GetNode());
 
 	m_SetAllottedColorsCallback_Client(client_CAT, tot_su);*/
 	received_neighbour_channel_availability = received_status_array;
-	/*for(int j=0;j<11;j++)
-	{
-		if (received_neighbour_channel_availability)
-			NS_LOG_UNCOND(received_neighbour_channel_availability[1][j]);
-	}*/
+
+	/*for(int i=0;i<no_su;i++)
+	    {
+		  std::cout << "Received neighbour channel availability for Node: " << i << " is:\n";
+	  	  for(int j=0;j<11;j++)
+	  		std::cout << received_neighbour_channel_availability[i][j] << "\t";
+	  	  std::cout << "\n";
+	    }*/
+
 	//NS_LOG_INFO (source << "\t" << node_id);
 }
 
@@ -677,14 +694,14 @@ void Bsync_Client::startCG()
 	  //std::cout << n << '\n';
   //int tot_free_channels = m_spectrumManager->GetTotalFreeChannelsNow();
   if (tot_free_channels!=0)
-	  ConflictGC.array_node_wt = 1/(tot_free_channels*1.0);
-  //NS_LOG_UNCOND(ConflictGC.array_node_wt);
+	  array_node_wt = 1/(tot_free_channels*1.0);
+  //NS_LOG_UNCOND(array_node_wt);
 
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   std::cout << "Node Weights of conflict Graph updated locally at Client: " << this->GetNode()->GetId() << std::endl;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
-  ConflictGC.conflict(this->GetNode());
+  conflict(this->GetNode());
 
   m_SetAllottedColorsCallback_Client(client_CAT, tot_su);
 

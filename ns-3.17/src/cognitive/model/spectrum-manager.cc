@@ -250,7 +250,7 @@ std::vector<int> SpectrumManager::GetListofFreeChannels()
 		for(int i=0;i<MAX_CHANNELS;i++)
 		{
 			//int current_channel=m_repository->GetRxChannel(m_nodeId);
-			m_wifiPhy->SetChannelNumber(i);
+			//m_wifiPhy->SetChannelNumber(i);
 			m_repository->SetRxChannel(m_nodeId,i);
 			NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << i); //current_channel
 
@@ -286,7 +286,7 @@ int SpectrumManager::GetTotalFreeChannelsNow()
 		for(int i=0;i<MAX_CHANNELS;i++)
 		{
 			//int current_channel=m_repository->GetRxChannel(m_nodeId);
-			m_wifiPhy->SetChannelNumber(i);
+			//m_wifiPhy->SetChannelNumber(i);
 			m_repository->SetRxChannel(m_nodeId,i);
 			NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << i); //current_channel
 
@@ -310,7 +310,7 @@ int SpectrumManager::GetTotalFreeChannelsNow()
 
 void SpectrumManager::SetBsyncColor(int color_this_node)
 {
-	//m_wifiPhy->SetChannelNumber(color_this_node);
+	m_wifiPhy->SetChannelNumber(color_this_node);
 	m_repository->SetRxChannel(m_nodeId, color_this_node);
 }
 
