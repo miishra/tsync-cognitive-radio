@@ -47,6 +47,10 @@ public:
   void Client_Bsync_Logic();
   void Send (Ptr<Packet> data, int sending_node_id);
 
+  std::vector<Ipv4Address> Routing_Nodes_Client;
+  void GetRoutingTableClient(std::vector<Ipv4Address> received_Routing_Nodes, int node_id);
+  std::vector<Ipv4Address> fetchReoutingNodesClient();
+
   int no_su;
   int no_pu;
   int current_depth;

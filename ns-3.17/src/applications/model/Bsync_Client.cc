@@ -100,41 +100,13 @@ void Bsync_Client::conflict(Ptr<Node> current_node)
   Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> (to_string(current_node->GetId()) + "dynamic-global-routing-client.routes", std::ios::out);
   g.PrintRoutingTableAt (Seconds (0.0), current_node, routingStream);
 
-  std::ifstream infile(to_string(current_node->GetId()) + "dynamic-global-routing-client.routes");
+  for (int i=0;i<tot_su;i++)
+	  ConnectedNodeStatus_Client[i]=false;
 
-  std::string line;
-  int current_node_id=-1, line_count=1, hop_count;
-  std::string dest_ip, link_status, gen_string, delim="\t";
-  while (std::getline(infile, line))
+  for (int i=0;i<Routing_Nodes_Client.size();i++)
   {
-  	std::istringstream iss(line);
-  	/*if (!(iss >> gen_string))
-  	{
-  		break;
-  	}*/
-  	//std::cout << line << endl;
-  	if (line_count>3)
-  	{
-  		size_t pos = 0;
-  		std::string token;
-  		int place=1;
-  		while ((pos = line.find(delim)) != std::string::npos) {
-  		    token = line.substr(0, pos);
-  		    if (place==1)
-  		    	dest_ip.assign(token);
-  		    else if (place==4)
-  		    	link_status.assign(token);
-  		    else if (place==6)
-  		    	hop_count=stoi(token);
-  		    line.erase(0, pos + delim.length());
-  		    place++;
-  		}
-  	}
-  	line_count++;
-  	if (link_status.compare("UP")==0 && hop_count==1)
-  	{
-  		ConnectedNodeStatus_Client[ip_nodeid_hash[Ipv4Address(dest_ip.c_str())]]=true;
-  	}
+	  if (Routing_Nodes_Client[i]!=Ipv4Address("10.1.1.255") && Routing_Nodes_Client[i]!=Ipv4Address("127.0.0.1"))
+		  ConnectedNodeStatus_Client[ip_nodeid_hash[Routing_Nodes_Client[i]]]=true;
   }
 
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
@@ -148,6 +120,26 @@ void Bsync_Client::conflict(Ptr<Node> current_node)
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 
   color_conflict();
+}
+
+void Bsync_Client::GetRoutingTableClient(std::vector<Ipv4Address> received_Routing_Nodes, int node_id)
+{
+	NS_LOG_FUNCTION (this);
+	if (node_id==this->GetNode()->GetId() && Routing_Nodes_Client.size()==0)
+	{
+		//std::cout << "At: " << Simulator::Now ().GetSeconds () << " Received Routing Nodes at Node: " << node_id << std::endl;
+		Routing_Nodes_Client=received_Routing_Nodes;
+		/*for (int i=0;i<Routing_Nodes_Client.size();i++)
+			std::cout << "Connected to Node: " << Routing_Nodes_Client[i] << "\t";
+		std::cout << std::endl;*/
+
+	}
+}
+
+std::vector<Ipv4Address> Bsync_Client::fetchReoutingNodesClient()
+{
+  NS_LOG_FUNCTION (this);
+  return Routing_Nodes_Client;
 }
 
 bool sortbysecond(const tuple<int, double> &a,
@@ -229,18 +221,29 @@ void Bsync_Client::color_conflict()
 
 			  //std::cout << get<0>(nodeid_status[i]) << '\t' << avail_colors_this_node.size() << std::endl;
 
-			  vector<int>::iterator randIt = avail_colors_this_node.begin();
-			  std::advance(randIt, std::rand() %avail_colors_this_node.size());
+			  if (avail_colors_this_node.size()>0)
+			  {
+				  vector<int>::iterator randIt = avail_colors_this_node.begin();
+				  std::advance(randIt, std::rand() %avail_colors_this_node.size());
 
-			  client_CAT[get<0>(nodeid_status[i])]= *randIt;
+				  if (*randIt)
+					  client_CAT[get<0>(nodeid_status[i])]= *randIt;
+				  else
+					  client_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%10+1;
 
-			  //std::cout << get<0>(nodeid_status[i]) << (int) client_CAT[get<0>(nodeid_status[i])] << std::endl;
-			  //avail_colors_this_node.erase(std::remove(avail_colors_this_node.begin(), avail_colors_this_node.end(), *randIt), avail_colors_this_node.end());
+				  //std::cout << get<0>(nodeid_status[i]) << (int) client_CAT[get<0>(nodeid_status[i])] << std::endl;
+				  //avail_colors_this_node.erase(std::remove(avail_colors_this_node.begin(), avail_colors_this_node.end(), *randIt), avail_colors_this_node.end());
 
-			  for(int i=0;i<no_su;i++)
-				  available_colors[i][*randIt]=0;
+				  for(int i=0;i<no_su;i++)
+					  available_colors[i][*randIt]=0;
 
-			  childvector.push_back(get<0>(nodeid_status[i]));
+				  childvector.push_back(get<0>(nodeid_status[i]));
+			  }
+			  else
+			  {
+				  client_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%10+1;
+				  childvector.push_back(get<0>(nodeid_status[i]));
+			  }
 		  }
 	  }
   }
@@ -368,7 +371,7 @@ void Bsync_Client::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id);
 			neighbour_status_array_client[ptpt.sending_node_id]=ptpt.received_color;
-			ConnectedNodeStatus_Client[ptpt.sending_node_id]=true;
+			//ConnectedNodeStatus_Client[ptpt.sending_node_id]=true;
 			link_co(ptpt.sending_node_id, snrval);
 		}
 		//TypeHeader tHeader (AODVTYPE_RREQ);
@@ -476,7 +479,7 @@ Bsync_Client::StartApplication (void)
 
   no_su=tot_su;
   no_pu=2;
-  ConnectedNodeStatus_Client = new bool[tot_su+2]();
+  ConnectedNodeStatus_Client = new bool[tot_su]();
   current_depth=0;
   client_CAT = new uint8_t[tot_su]();
   array_link_co= new double[tot_su]();
@@ -504,6 +507,11 @@ Bsync_Client::StartApplication (void)
   oss.clear();
   oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/HelloReceiveCallback";
   Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Client::ReceivedNeighbourSNR,this));
+
+  oss.str("");
+  oss.clear();
+  oss << "/NodeList/" << this->GetNode()->GetId() << "/$ns3::aodv::RoutingProtocol/RoutingNodesCallbackClient";
+  Config::ConnectWithoutContext (oss.str (),MakeCallback (&Bsync_Client::GetRoutingTableClient,this));
 
   if (m_socket_client == 0)
     {
@@ -723,6 +731,7 @@ void Bsync_Client::startCG()
 void
 Bsync_Client::Client_Bsync_Logic ()
 {
+	NS_LOG_FUNCTION (this);
 	for(int i=0; i<childvector.size(); i++)
 	{
 		internal_timer =0;

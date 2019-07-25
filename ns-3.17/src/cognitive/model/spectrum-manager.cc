@@ -271,7 +271,7 @@ std::vector<int> SpectrumManager::GetListofFreeChannels()
 				NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << i+1); //next_channel
 		}
 	}
-	m_wifiPhy->SetChannelNumber(prev_channel);
+	//m_wifiPhy->SetChannelNumber(prev_channel);
 	m_repository->SetRxChannel(m_nodeId,prev_channel);
 	return v;
 }
@@ -303,7 +303,7 @@ int SpectrumManager::GetTotalFreeChannelsNow()
 				NS_LOG_INFO ("[SENSING-DBG] Node %d starts sensing on channel %d" << m_nodeId << i+1); //next_channel
 		}
 	}
-	m_wifiPhy->SetChannelNumber(prev_channel);
+	//m_wifiPhy->SetChannelNumber(prev_channel);
 	m_repository->SetRxChannel(m_nodeId,prev_channel);
 	return no_free_channels;
 }

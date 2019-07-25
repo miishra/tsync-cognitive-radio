@@ -155,8 +155,8 @@ RoutingProtocol::RoutingProtocol () :
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
-  m_received_channel_availability = new bool*[20];
-  for(int i = 0; i < 20; i++)
+  m_received_channel_availability = new bool*[5];
+  for(int i = 0; i < 5; i++)
   {
 	  m_received_channel_availability[i] = new bool[11]();
 	  for(int j = 0; j < 11; j++)
@@ -184,9 +184,11 @@ RoutingProtocol::GetTypeId (void)
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallback))
 	.AddTraceSource ("RoutingNodesCallbackServer"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_RoutingNodesReceiveCallback))
+    .AddTraceSource ("RoutingNodesCallbackClient"," pass parameters to application ",
+				   MakeTraceSourceAccessor (&RoutingProtocol::m_RoutingNodesReceiveCallback))
 	.AddTraceSource ("HelloReceiveCallbackClient"," pass parameters to application ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_MyHelloReceiveCallbackClient))
-   .AddTraceSource ("ReceivedCATCallbackServer"," Send Received CAT to the Server ",
+    .AddTraceSource ("ReceivedCATCallbackServer"," Send Received CAT to the Server ",
 				   MakeTraceSourceAccessor (&RoutingProtocol::m_ReceivedCATCallback_Server))
     .AddAttribute ("RreqRetries", "Maximum number of retransmissions of RREQ to discover a route",
                    UintegerValue (2),
@@ -1437,6 +1439,9 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  //std::cout << "Sent by node: " << ptpt.sending_node_id << " to Node: " << m_ipv4->GetObject <Node>()->GetId() << std::endl;
 	  /*for(int j=0;j<11;j++)
 		  NS_LOG_UNCOND(m_received_channel_availability[m_ipv4->GetObject <Node>()->GetId()][j]);*/
+
+	  //std::cout << "Hello packet Received from: " << ptpt.sending_node_id << " with Parent Node: " << ptpt.received_color << std::endl;
+
 	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability);
 
 	  m_MyHelloReceiveCallbackClient(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability);
@@ -1741,8 +1746,10 @@ RoutingProtocol::setSpecManager(SpectrumManager *specManager_aodv, bool* free_ch
   //NS_LOG_UNCOND("Spectrum Manager at AODV updated");
   m_specManager_aodv = specManager_aodv;
   m_sent_channel_availability = free_channels_sent_list;
+
+  //std::cout << received_ref_node_id << std::endl;
   ref_node_ID = received_ref_node_id;
-  //std::cout << sizeof(m_sent_channel_availability) << std::endl;
+
   /*for(int i=0;i<4;i++)
   {
 	  for(int j=0;j<11;j++)
@@ -1809,6 +1816,9 @@ RoutingProtocol::SendHello ()
       packet->AddHeader (tHeader);
       PacketTypePacketTag bt = ns3::PacketTypePacketTag(CTRL_PACKET);
       bt.set_node_id(m_ipv4->GetObject<Node> ()->GetId ());
+
+      //std::cout << "Hello packet sent from: " << m_ipv4->GetObject<Node> ()->GetId () << " with Parent Node: " << ref_node_ID << std::endl;
+
       bt.set_received_color(ref_node_ID);//flag to show the Synchronization status in the received hello message - 0: Master Node -1:Not Synchronized in Time 0: Synchronized in Time
       packet->AddPacketTag(bt);
       // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise

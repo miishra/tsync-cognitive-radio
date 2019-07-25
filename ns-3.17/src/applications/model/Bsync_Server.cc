@@ -94,7 +94,10 @@ void Bsync_Server::conflict(Ptr<Node> current_node)
 	  ConnectedNodeStatus[i]=false;
 
   for (int i=0;i<Routing_Nodes.size();i++)
-      ConnectedNodeStatus[ip_nodeid_hash_client[Routing_Nodes[i]]]=true;
+  {
+	  if (Routing_Nodes[i]!=Ipv4Address("10.1.1.255") && Routing_Nodes[i]!=Ipv4Address("127.0.0.1"))
+		  ConnectedNodeStatus[ip_nodeid_hash_client[Routing_Nodes[i]]]=true;
+  }
 
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   std::cout << "In the Conflict Graph, Following nodes are connected at Server: " << current_node->GetId() << std::endl;
@@ -135,8 +138,8 @@ void Bsync_Server::color_conflict()
 	  nodeid_status.push_back(make_tuple(i, array_link_co[i]));
   sort(nodeid_status.begin(), nodeid_status.end(), sortbysec);
 
-  //for(int i = 0; i < nodeid_status.size(); i++)
-      //std::cout << get<0>(nodeid_status[i]) << " " << get<1>(nodeid_status[i]) << "\n";
+  //for(int i = 0; i < no_su; i++)
+      //std::cout << neighbour_status_array[i] << "\n";
 
   for (int i=0;i<no_su;i++)
   {
@@ -157,7 +160,7 @@ void Bsync_Server::color_conflict()
   {
 	  if (get<0>(nodeid_status[i])!=m_self_node_id)
 	  {
-		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true && (neighbour_status_array[get<0>(nodeid_status[i])]==-1)) //(neighbour_status_array[get<0>(nodeid_status[i])]==-1)
+		  if (ConnectedNodeStatus[get<0>(nodeid_status[i])]==true ) //(neighbour_status_array[get<0>(nodeid_status[i])]==-1)
 		  {
 				  vector<int> avail_colors_this_node;
 				  for(int j=0;j<11;j++)
@@ -166,25 +169,39 @@ void Bsync_Server::color_conflict()
 						  avail_colors_this_node.push_back(j);
 				  }
 
-				  vector<int>::iterator randIt = avail_colors_this_node.begin();
-				  std::advance(randIt, std::rand() %avail_colors_this_node.size());
+				  if (avail_colors_this_node.size()>0)
+				  {
+					  vector<int>::iterator randIt = avail_colors_this_node.begin();
+					  std::advance(randIt, std::rand() %avail_colors_this_node.size());
 
-				  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
+					  if (*randIt)
+						  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
+					  else
+						  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%10+1;
 
-				  //transmitasONF(m_socket, get<0>(nodeid_status[i]));
-				  //cout << *randIt << std::endl;
+					  /*if (get<0>(nodeid_status[i])==3)
+						  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)10;*/
 
-				  for(int i=0;i<no_su;i++)
-					  available_colors[i][*randIt]=0;
+					  //transmitasONF(m_socket, get<0>(nodeid_status[i]));
+					  //cout << *randIt << std::endl;
 
-				  server_Vector.push_back(get<0>(nodeid_status[i]));
-				  //avail_colors_this_node.erase(randIt);
+					  for(int i=0;i<no_su;i++)
+						  available_colors[i][*randIt]=0;
+
+					  server_Vector.push_back(get<0>(nodeid_status[i]));
+					  //avail_colors_this_node.erase(randIt);
+				  }
+				  else
+				  {
+					  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%10+1;
+					  server_Vector.push_back(get<0>(nodeid_status[i]));
+				  }
 		  }
 	  }
   }
 
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
-  std::cout << "In Coloring of Conflict Graph, Following Colors are allocated to neighbors at Client: " << m_self_node_id << std::endl;
+  std::cout << "In Coloring of Conflict Graph, Following Colors are allocated to neighbors at Server: " << m_self_node_id << std::endl;
   for (int j=0;j<no_su;j++)
   {
 	  if (server_CAT[j]!=250 && j!= m_self_node_id)
@@ -192,6 +209,8 @@ void Bsync_Server::color_conflict()
   }
   cout << endl;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
+
+  //m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
 
   transmitasONF(m_socket);
 
@@ -283,7 +302,7 @@ void Bsync_Server::MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channe
 			//for(int j=0;j<11;j++)
 				//NS_LOG_UNCOND(received_neighbour_channel_availability[ptpt.sending_node_id][j]);
 			//NS_LOG_UNCOND("Got Hello Packet with SNR: " << snrval << " Db for a packet of type: " << ptpt.Get() << " from node: " << ptpt.sending_node_id << " with Status: " << ptpt.received_color);
-			if (neighbour_status_array[ptpt.sending_node_id]==-1)
+			if (neighbour_status_array[ptpt.sending_node_id]<0)
 				neighbour_status_array[ptpt.sending_node_id]=ptpt.received_color;
 			ConnectedNodeStatus[ptpt.sending_node_id]=true;
 			link_co(ptpt.sending_node_id, snrval);
@@ -311,13 +330,14 @@ void
 Bsync_Server::MyFunction(SpectrumManager * sm)
 {
   NS_LOG_FUNCTION (this);
-  //std::cout << Bsync_Server::Routing_Nodes.size() << std::endl;
+  //std::cout << ref_node_id << std::endl;
   m_spectrumManager=sm;
+  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, ref_node_id);
 
-  if (!isSMupdated)
+  /*if (!isSMupdated)
   {
 	  m_SetSpecAODVCallback(m_spectrumManager, sent_neighbour_channel_availability, ref_node_id);
-  }
+  }*/
 
 }
 
@@ -548,13 +568,16 @@ void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
 	  current_receive_color = (int) server_CAT_received[this->GetNode()->GetId()];
 	  if (current_receive_color<20)
 		  m_spectrumManager->SetBsyncColor(current_receive_color);
+	  /*if (this->GetNode()->GetId()==6)
+		  m_spectrumManager->SetBsyncColor(10);*/
 	  std::cout << "Current Receive Color for Node: " << this->GetNode()->GetId() << " is: " << current_receive_color << std::endl;
   }
-
+  //std::cout << "CAT received at Node: " << this->GetNode()->GetId() << " is: " << (int) server_CAT_received[this->GetNode()->GetId()]<< std::endl;
   /*for(int i=0;i<tot_su;i++)
-  {
-	  std::cout << (int) server_CAT_received[i] << '\n';
-  }*/
+    {
+  	  std::cout << (int) server_CAT_received[i] << '\t';
+    }
+    std::cout << std::endl;*/
 }
 
 void Bsync_Server::GetRoutingTable(std::vector<Ipv4Address> received_Routing_Nodes, int node_id)
@@ -573,6 +596,8 @@ void Bsync_Server::GetRoutingTable(std::vector<Ipv4Address> received_Routing_Nod
 
 void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 {
+	NS_LOG_FUNCTION (this);
+	//m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
 	for(int i=0; i<server_Vector.size(); i++)
 	{
 		NS_LOG_FUNCTION (this);
@@ -661,6 +686,9 @@ Bsync_Server::StopApplication ()
   }*/
 
   //Ptr<ns3::Ipv4RoutingHelper> routing = node -> GetObject<RoutingProtocol>();
+
+  //std::cout << "Current Receive Color for Node: " << this->GetNode()->GetId() << " is: " << current_receive_color << std::endl;
+
 }
 
 void
@@ -703,14 +731,14 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 
       if (ref_node_id==-1 && ((BsyncData*) buffer)->type==2)
       {
-    	  ref_node_id=((BsyncData*) buffer)->sender;
+    	  ref_node_id=(int)((BsyncData*) buffer)->sender;
       	  NS_LOG_INFO("At time " << Simulator::Now ().GetSeconds () << " server with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node");
           NS_LOG_UNCOND("At time " << Simulator::Now ().GetSeconds () << " Ordinary Node with node ID: " << this->GetNode()->GetId() << " chose " << ref_node_id << " as their reference node and became ONREF");
           NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
           Simulator::Schedule (Seconds (1.0), &Bsync_Server::startCG, this);
       }
 
-      if ((ref_node_id==-1 || ref_node_id==((BsyncData*) buffer)->sender) && ((BsyncData*) buffer)->type==2)
+      if ((ref_node_id==-1 || ref_node_id==(int)((BsyncData*) buffer)->sender) && (int)((BsyncData*) buffer)->type==2)
       {
     	  last_internal_timer_val=internal_timer;
 		  internal_timer = min(increment_decrement(internal_timer, 0), 1.0);

@@ -339,7 +339,7 @@ YansWifiPhy::SetChannelNumber (uint16_t nch)
       return;
     }
 
-  NS_ASSERT (!IsStateSwitching () && !IsStateSensing ());
+  NS_ASSERT (!IsStateSwitching () && !IsStateSensing ());//commented
   switch (m_state->GetState ())
     {
     case YansWifiPhy::RX:

@@ -22,11 +22,11 @@ int main (int argc, char *argv[])
 
   SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
-  int nNodes = 20;
+  int nNodes = 5;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   NS_LOG_UNCOND("Number of Nodes in the Scenario: " << nNodes << "\n\n");
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
-  double simulation_duration=10.0;
+  double simulation_duration=20.0;
 
   CommandLine cmd;
 
@@ -75,7 +75,7 @@ int main (int argc, char *argv[])
   /*mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
                                       "X", StringValue ("0.0"),
                                       "Y", StringValue ("0.0"),
-                                      "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=50]"));*/
+                                      "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=30]"));*/
 
   // Position our nodes with 110 m in between
   Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
@@ -146,11 +146,14 @@ int main (int argc, char *argv[])
 
   Bsync_ServerHelper server (port, simulation_duration, nNodes);
   ApplicationContainer apps;
-  for(int i=1;i<c.GetN();i++)
+  for(int i=0;i<c.GetN();i++)
   {
-	  apps = server.Install (c.Get (i));
-	  apps.Start (Seconds (1.0));
-	  apps.Stop (Seconds (simulation_duration));
+	  if (i!=c.GetN()/2)
+	  {
+		  apps = server.Install (c.Get (i));
+		  apps.Start (Seconds (1.0));
+		  apps.Stop (Seconds (simulation_duration));
+	  }
   }
 
   /*apps = server.Install (c.Get (c.GetN()-2));
@@ -164,7 +167,7 @@ int main (int argc, char *argv[])
   client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
   client.SetAttribute ("Interval", TimeValue (interPacketInterval));
   client.SetAttribute ("PacketSize", UintegerValue (packetSize));
-  apps = client.Install (c.Get (0));
+  apps = client.Install (c.Get (c.GetN()/2));//0
   //client.SetFill (apps.Get (0), "Hello World");
   apps.Start (Seconds (2.0));
   apps.Stop (Seconds (simulation_duration));
