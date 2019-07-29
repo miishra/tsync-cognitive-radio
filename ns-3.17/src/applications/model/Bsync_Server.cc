@@ -265,6 +265,8 @@ Bsync_Server::Bsync_Server ()
   ref_flag=0;
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
+  time_to_synchronize=10000;
+  synchronized_flag=false;
 
   //tot_su=10;
 
@@ -660,6 +662,7 @@ Bsync_Server::StopApplication ()
 	  timestamp = timestamp - period;
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "had final Timestamp: " << timestamp);
+  NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " took: " << time_to_synchronize << " seconds to synchronize.");
 
   if (m_socket != 0)
     {
@@ -713,6 +716,13 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       bool foundpc = packet->PeekPacketTag(pcpt);*/
       packet->CopyData(buffer, packet->GetSize ());
       //std::string s = std::string((char*)buffer);
+
+      if (Simulator::Now().GetSeconds()-((BsyncData*) buffer)->s_sent_ts < 0.5 && synchronized_flag==false)
+      {
+    	  time_to_synchronize=Simulator::Now().GetSeconds()-1;
+    	  synchronized_flag=true;
+      }
+
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s server received " << packet->GetSize () << " bytes from " <<
@@ -757,6 +767,7 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 
           if (((BsyncData*) buffer)->s_sent_ts>timestamp)
         	  timestamp = ((BsyncData*) buffer)->s_sent_ts;
+
           //NS_LOG_UNCOND("Round: " << m_period_count << " of ON with Node ID: " << this->GetNode()->GetId() << " Current TimeStamp Value: " << timestamp);
           //NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
           m_period_count+=1;

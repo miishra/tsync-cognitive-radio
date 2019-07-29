@@ -38,6 +38,9 @@ public:
 
   bool *ConnectedNodeStatus;
 
+  double time_to_synchronize;
+  bool synchronized_flag;
+
   std::vector<int> server_Vector;
 
   std::vector<Ipv4Address> Routing_Nodes;

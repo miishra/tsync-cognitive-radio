@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
 
   SeedManager::SetSeed(1);
   std::string phyMode ("ErpOfdmRate54Mbps");
-  int nNodes = 5;
+  int nNodes = 10;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
   NS_LOG_UNCOND("Number of Nodes in the Scenario: " << nNodes << "\n\n");
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
@@ -83,7 +83,7 @@ int main (int argc, char *argv[])
   for (int i=0; i<nNodes; i++)
   {
   	  positionAlloc->Add (Vector (start, 0.0, 0.0));
-  	  start = start+10;//10
+  	  start = start+5;//10
   }
   mobility.SetPositionAllocator (positionAlloc);
 

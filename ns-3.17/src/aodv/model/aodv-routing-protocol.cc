@@ -155,8 +155,8 @@ RoutingProtocol::RoutingProtocol () :
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
-  m_received_channel_availability = new bool*[5];
-  for(int i = 0; i < 5; i++)
+  m_received_channel_availability = new bool*[10];
+  for(int i = 0; i < 10; i++)
   {
 	  m_received_channel_availability[i] = new bool[11]();
 	  for(int j = 0; j < 11; j++)
