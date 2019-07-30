@@ -421,6 +421,8 @@ Bsync_Server::StartApplication (void)
   array_net_Intf=0;
   opt_net_Intf=0;
 
+  output_server.open ("results.txt", std::fstream::app);
+
   //m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
 
   m_self_node_id=this->GetNode()->GetId();
@@ -676,6 +678,8 @@ Bsync_Server::StopApplication ()
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " Sent following number of Sync messages and Sync replies: " << tot_sync_sent);
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " Sent following number of Hello messages: " << tot_hello_sent);
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " has total protocol overhead: " << tot_hello_sent*overhead_per_hello + tot_sync_sent*overhead_sync);
+  output_server << this->GetNode()->GetId() << "\t" << "S" << "\t" << m_sent << "\t" << m_received << "\t" << timestamp << "\t" << time_to_synchronize << "\t" << tot_sync_sent << "\t" << tot_hello_sent << "\t" << tot_hello_sent*overhead_per_hello + tot_sync_sent*overhead_sync << std::endl;
+  output_server.close();
 
   if (m_socket != 0)
     {

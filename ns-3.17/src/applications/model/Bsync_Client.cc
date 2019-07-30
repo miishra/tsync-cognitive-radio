@@ -273,16 +273,16 @@ Bsync_Client::GetTypeId (void)
                    UintegerValue (100),
                    MakeUintegerAccessor (&Bsync_Client::m_count),
                    MakeUintegerChecker<uint32_t> ())
-   .AddAttribute ("SimulationDurationClient",
-					  "Total duration of the Simulation",
-					  DoubleValue (20),
-					  MakeDoubleAccessor (&Bsync_Client::stop_time),
-					  MakeDoubleChecker<double> ())
-  .AddAttribute ("TotalSUClient",
-					 "Total Number of Secondary Users.",
-					 IntegerValue (10),
-					 MakeIntegerAccessor (&Bsync_Client::tot_su),
-					 MakeIntegerChecker<int> ())
+    .AddAttribute ("SimulationDurationClient",
+				   "Total duration of the Simulation",
+				   DoubleValue (20),
+				   MakeDoubleAccessor (&Bsync_Client::stop_time),
+				   MakeDoubleChecker<double> ())
+    .AddAttribute ("TotalSUClient",
+				   "Total Number of Secondary Users.",
+				   IntegerValue (10),
+				   MakeIntegerAccessor (&Bsync_Client::tot_su),
+				   MakeIntegerChecker<int> ())
     .AddAttribute ("Interval",
                    "The time to wait between packets",
                    TimeValue (Seconds (1.0)),

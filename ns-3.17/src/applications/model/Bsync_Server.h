@@ -56,6 +56,8 @@ public:
   void GetRoutingTable(std::vector<Ipv4Address> received_Routing_Nodes, int node_id);
   std::vector<Ipv4Address> fetchReoutingNodes();
 
+  std::fstream output_server;
+
   int overhead_per_hello;
   int overhead_sync;
   int tot_hello_sent;

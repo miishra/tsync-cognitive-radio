@@ -13,6 +13,8 @@
 #include <vector>
 #include <string>
 
+using namespace std;
+
 NS_LOG_COMPONENT_DEFINE ("CRTest");
 
 using namespace ns3;
@@ -144,6 +146,11 @@ int main (int argc, char *argv[])
   //Config::Set ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Server/TotalSU", IntegerValue(nNodes));
   //Config::Set ("/NodeList/*/ApplicationList/*/$ns3::Bsync_Server/TotalSU", DoubleValue(simulation_duration));
 
+  std::fstream main_reader;
+  main_reader.open("results.txt", std::fstream::app);
+  main_reader << std::endl;
+  main_reader.close();
+
   Bsync_ServerHelper server (port, simulation_duration, nNodes);
   ApplicationContainer apps;
   for(int i=1;i<c.GetN()-1;i++)
@@ -183,6 +190,39 @@ int main (int argc, char *argv[])
   Simulator::Stop (Seconds (simulation_duration+1.0));
   Simulator::Run ();
   Simulator::Destroy ();
+
+  main_reader.open("results.txt", std::fstream::in);
+  int SentBytes[nNodes], ReceivedBytes[nNodes], TotalSyncSent[nNodes], TotalHelloSent[nNodes], TotalOverHeadBytes[nNodes];
+  double FinalTimestamp[nNodes], TimeToSyncronize[nNodes];
+
+  std::string line;
+  while (std::getline(main_reader, line))
+  {
+	  int node_id;
+	  std::string mode;
+	  std::istringstream iss(line);
+	  int SentBytes_temp, ReceivedBytes_temp, TotalSyncSent_temp, TotalHelloSent_temp, TotalOverHeadBytes_temp;
+	  double FinalTimestamp_temp, TimeToSyncronize_temp;
+	  if (iss >> node_id >> mode >> SentBytes_temp >> ReceivedBytes_temp >> FinalTimestamp_temp >> TimeToSyncronize_temp >> TotalSyncSent_temp >> TotalHelloSent_temp >> TotalOverHeadBytes_temp)
+	  {
+		  SentBytes[node_id] = SentBytes_temp, ReceivedBytes[node_id] = ReceivedBytes_temp, FinalTimestamp[node_id] = FinalTimestamp_temp, TimeToSyncronize[node_id] = TimeToSyncronize_temp, TotalSyncSent[node_id] = TotalSyncSent_temp;
+		  TotalHelloSent[node_id] = TotalHelloSent_temp, TotalOverHeadBytes[node_id] = TotalOverHeadBytes_temp;
+	  }
+	  else if (!(iss >> node_id >> mode >> SentBytes_temp >> ReceivedBytes_temp >> FinalTimestamp_temp >> TimeToSyncronize_temp >> TotalSyncSent_temp >> TotalHelloSent_temp >> TotalOverHeadBytes_temp))
+	  {
+		  continue;
+	  }
+  }
+
+  string fileNameWithNoExtension = "plot-2d";
+  string graphicsFileName        = fileNameWithNoExtension + ".png";
+  string plotFileName            = fileNameWithNoExtension + ".plt";
+  string plotTitle               = "2-D Plot";
+  string dataTitle               = "2-D Data";
+
+  // Instantiate the plot and set its title.
+  //Gnuplot plot (graphicsFileName);
+  //plot.SetTitle (plotTitle);
 
   return 0;
 }
