@@ -441,9 +441,12 @@ Bsync_Client::MyFunction(SpectrumManager * sm)
 
 }
 
-void Bsync_Client::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** received_status_array)
+void Bsync_Client::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array, int sent_hello_messages_till_now)
 {
 	NS_LOG_FUNCTION (this);
+
+	tot_hello_sent = sent_hello_messages_till_now;
+
 	//std::cout << source << node_id << " " <<  endl;
 	ip_nodeid_hash[source] = node_id;
 

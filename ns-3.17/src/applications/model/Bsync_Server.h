@@ -56,6 +56,13 @@ public:
   void GetRoutingTable(std::vector<Ipv4Address> received_Routing_Nodes, int node_id);
   std::vector<Ipv4Address> fetchReoutingNodes();
 
+  int overhead_per_hello;
+  int overhead_sync;
+  int tot_hello_sent;
+  int tot_sync_sent;
+  int used_color_freq_server[11];
+
+
   int no_su;
   int no_pu;
   int current_depth;
@@ -93,7 +100,8 @@ private:
   TracedCallback<SpectrumManager *, bool *, int> m_SetSpecAODVCallback;
   TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback;
   TracedCallback<std::vector<Ipv4Address>, int> m_RoutingNodesReceiveCallback;
-  void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array);
+  void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array, int sent_hello_messages_til_now);
+
 
   uint16_t m_port;
   int tot_su;

@@ -268,6 +268,10 @@ Bsync_Server::Bsync_Server ()
   time_to_synchronize=10000;
   synchronized_flag=false;
 
+  overhead_sync=0;
+  tot_hello_sent=0;
+  tot_sync_sent=0;
+
   //tot_su=10;
 
   //cout << internal_timer << endl;
@@ -350,9 +354,12 @@ Bsync_Server::fetchReoutingNodes()
   return Routing_Nodes;
 }
 
-void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool** received_status_array)
+void Bsync_Server::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array, int sent_hello_messages_til_now)
 {
 	NS_LOG_FUNCTION (this);
+
+	tot_hello_sent = sent_hello_messages_til_now;
+
 	//std::cout << this->GetNode()->GetId() <<  endl;
 	ip_nodeid_hash_client[source] = node_id;
 
@@ -374,6 +381,9 @@ Bsync_Server::StartApplication (void)
 {
 
   NS_LOG_FUNCTION (this);
+
+  overhead_per_hello = 19 + tot_su;
+  overhead_sync=40;
 
   std::cout << "Server App started at Node: " << this->GetNode()->GetId() << std::endl;
 
@@ -602,7 +612,7 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 	//m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
 	for(int i=0; i<server_Vector.size(); i++)
 	{
-		NS_LOG_FUNCTION (this);
+		tot_sync_sent++;
 		//internal_timer =0;
 		BsyncData Bsync_data;
 		m_state = SYNCING;
@@ -663,6 +673,9 @@ Bsync_Server::StopApplication ()
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "Sent: " << m_sent << " packets and received: " << m_received << " packets");
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << "had final Timestamp: " << timestamp);
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " took: " << time_to_synchronize << " seconds to synchronize.");
+  NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " Sent following number of Sync messages and Sync replies: " << tot_sync_sent);
+  NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " Sent following number of Hello messages: " << tot_hello_sent);
+  NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " has total protocol overhead: " << tot_hello_sent*overhead_per_hello + tot_sync_sent*overhead_sync);
 
   if (m_socket != 0)
     {
@@ -773,6 +786,9 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
           m_period_count+=1;
 
           NS_LOG_LOGIC ("Sending the reply packet");
+
+          tot_sync_sent++;
+
 		  socket->SetAllowBroadcast(true);
 		  m_status=true;
 		  m_state = READY;

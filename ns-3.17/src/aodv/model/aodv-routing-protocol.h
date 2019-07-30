@@ -68,6 +68,7 @@ public:
   bool **m_received_channel_availability;
   bool *m_sent_channel_availability;
   int ref_node_ID;
+  int tot_hello_sent_transport;
 
   /// c-tor
   RoutingProtocol ();
@@ -119,14 +120,15 @@ public:
   int64_t AssignStreams (int64_t stream);
   //void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<RoutingTable> m_sendRoutingTableCallback;
-  TracedCallback<Ipv4Address, int, bool **> m_MyHelloReceiveCallback;
+  TracedCallback<Ipv4Address, int, bool **, int> m_MyHelloReceiveCallback;
 
   TracedCallback<RoutingTable> m_sendRoutingTableCallbackClient;
-  TracedCallback<Ipv4Address, int, bool **> m_MyHelloReceiveCallbackClient;
+  TracedCallback<Ipv4Address, int, bool **, int> m_MyHelloReceiveCallbackClient;
 
   TracedCallback<uint8_t*> m_ReceivedCATCallback_Server;
 
   TracedCallback<std::vector<Ipv4Address>, int> m_RoutingNodesReceiveCallback;
+
 
 private:
   ///\name Protocol parameters.

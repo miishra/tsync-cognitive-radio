@@ -154,6 +154,7 @@ RoutingProtocol::RoutingProtocol () :
     {
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
+  tot_hello_sent_transport=0;
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
   m_received_channel_availability = new bool*[10];
   for(int i = 0; i < 10; i++)
@@ -1442,9 +1443,9 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 
 	  //std::cout << "Hello packet Received from: " << ptpt.sending_node_id << " with Parent Node: " << ptpt.received_color << std::endl;
 
-	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability);
+	  m_MyHelloReceiveCallback(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability, tot_hello_sent_transport);
 
-	  m_MyHelloReceiveCallbackClient(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability);
+	  m_MyHelloReceiveCallbackClient(rrepHeader.GetOrigin (), ptpt.sending_node_id, m_received_channel_availability, tot_hello_sent_transport);
       ProcessHello (rrepHeader, receiver);
       return;
     }
@@ -1794,6 +1795,7 @@ RoutingProtocol::SendHello ()
    */
   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j = m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
     {
+	  tot_hello_sent_transport++;
       Ptr<Socket> socket = j->first;
       Ipv4InterfaceAddress iface = j->second;
       RrepHeader helloHeader (/*prefix size=*/ 0, /*hops=*/ 0, /*dst=*/ iface.GetLocal (), /*dst seqno=*/ m_seqNo,

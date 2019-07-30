@@ -51,6 +51,12 @@ public:
   void GetRoutingTableClient(std::vector<Ipv4Address> received_Routing_Nodes, int node_id);
   std::vector<Ipv4Address> fetchReoutingNodesClient();
 
+  int overhead_per_hello;
+  int overhead_syn;
+  int tot_hello_sent;
+  int tot_sync_sent;
+
+
   int no_su;
   int no_pu;
   int current_depth;
@@ -100,7 +106,7 @@ private:
   void MonitorSniffRxCall (Ptr<const Packet> packet, uint16_t channelFreqMhz, uint16_t channelNumber, uint32_t rate, bool isShortPreamble, double signalDbm, double noiseDbm);
   TracedCallback<SpectrumManager *, bool *, int> m_SetSpecAODVCallback_Client;
   TracedCallback<Ipv4Address, int> m_MyHelloReceiveCallback_Client;
-  void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array);
+  void ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool ** received_status_array, int sent_hello_messages_till_now);
   void GetRoutingTable();
 
   uint16_t m_port;

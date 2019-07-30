@@ -146,31 +146,36 @@ int main (int argc, char *argv[])
 
   Bsync_ServerHelper server (port, simulation_duration, nNodes);
   ApplicationContainer apps;
-  for(int i=0;i<c.GetN();i++)
+  for(int i=1;i<c.GetN()-1;i++)
   {
-	  if (i!=c.GetN()/2)
-	  {
-		  apps = server.Install (c.Get (i));
-		  apps.Start (Seconds (1.0));
-		  apps.Stop (Seconds (simulation_duration));
-	  }
+	  apps = server.Install (c.Get (i));
+	  apps.Start (Seconds (1.0));
+	  apps.Stop (Seconds (simulation_duration));
   }
 
   /*apps = server.Install (c.Get (c.GetN()-2));
   apps.Start (Seconds (1.0));
   apps.Stop (Seconds (20.0));*/
 
-  uint32_t packetSize = 1024;
-  uint32_t maxPacketCount = 2;
-  Time interPacketInterval = Seconds (1.);
-  Bsync_ClientHelper client (Ipv4Address ("1.1.1.1"), port, simulation_duration, nNodes);//problem setting specific ip
-  client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
-  client.SetAttribute ("Interval", TimeValue (interPacketInterval));
-  client.SetAttribute ("PacketSize", UintegerValue (packetSize));
-  apps = client.Install (c.Get (c.GetN()/2));//0
-  //client.SetFill (apps.Get (0), "Hello World");
-  apps.Start (Seconds (2.0));
-  apps.Stop (Seconds (simulation_duration));
+  int tot_master_nodes=2;
+
+  for(int j=0;j<tot_master_nodes;j++)
+  {
+	  uint32_t packetSize = 1024;
+	  uint32_t maxPacketCount = 2;
+	  Time interPacketInterval = Seconds (1.);
+	  Bsync_ClientHelper client (Ipv4Address ("1.1.1.1"), port, simulation_duration, nNodes);//problem setting specific ip
+	  client.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
+	  client.SetAttribute ("Interval", TimeValue (interPacketInterval));
+	  client.SetAttribute ("PacketSize", UintegerValue (packetSize));
+	  if (j==0)
+		  apps = client.Install (c.Get (0));//0
+	  else
+		  apps = client.Install (c.Get (c.GetN()-1));
+	  //client.SetFill (apps.Get (0), "Hello World");
+	  apps.Start (Seconds (2.0));
+	  apps.Stop (Seconds (simulation_duration));
+  }
 
   // Output what we are doing
   NS_LOG_UNCOND ("Starting CR test");
