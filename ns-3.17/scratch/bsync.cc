@@ -7,6 +7,7 @@
 #include "ns3/internet-module.h"
 #include "ns3/applications-module.h"
 #include "ns3/packet-sink.h"
+#include "ns3/gnuplot.h"
 
 #include <iostream>
 #include <fstream>
@@ -221,8 +222,8 @@ int main (int argc, char *argv[])
   string dataTitle               = "2-D Data";
 
   // Instantiate the plot and set its title.
-  //Gnuplot plot (graphicsFileName);
-  //plot.SetTitle (plotTitle);
+  Gnuplot plot (graphicsFileName);
+  plot.SetTitle (plotTitle);
 
   return 0;
 }
