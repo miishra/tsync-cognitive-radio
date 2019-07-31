@@ -577,7 +577,7 @@ void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
   NS_LOG_FUNCTION (this);
   server_CAT_received = received_CAT_server;
 
-  if (current_receive_color==-1 )
+  if (current_receive_color==-1 && isSMupdated==true)
   {
 	  current_receive_color = (int) server_CAT_received[this->GetNode()->GetId()];
 	  if (current_receive_color<20)

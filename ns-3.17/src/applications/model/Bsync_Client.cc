@@ -747,6 +747,7 @@ Bsync_Client::Client_Bsync_Logic ()
 		Bsync_data_send.s_sent_ts = Simulator::Now ().GetSeconds ();
 		uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
 		memcpy((char*) buffer, &Bsync_data_send, sizeof(BsyncData));
+		PacketChannelPacketTag pcpt;
 		Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
 		m_size = sizeof(BsyncData);
 		if (Simulator::Now ().GetSeconds () < stop_time)

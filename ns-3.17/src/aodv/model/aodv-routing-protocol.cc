@@ -28,6 +28,7 @@
 #define NS_LOG_APPEND_CONTEXT                                   \
   if (m_ipv4) { std::clog << "[node " << m_ipv4->GetObject<Node> ()->GetId () << "] "; } 
 
+#include "AODVparameters.h"
 #include "aodv-routing-protocol.h"
 #include "ns3/log.h"
 #include "ns3/boolean.h"
@@ -156,8 +157,8 @@ RoutingProtocol::RoutingProtocol () :
     }
   tot_hello_sent_transport=0;
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
-  m_received_channel_availability = new bool*[10];
-  for(int i = 0; i < 10; i++)
+  m_received_channel_availability = new bool*[aodv_no_su];
+  for(int i = 0; i < aodv_no_su; i++)
   {
 	  m_received_channel_availability[i] = new bool[11]();
 	  for(int j = 0; j < 11; j++)
