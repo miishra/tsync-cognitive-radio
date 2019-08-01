@@ -314,7 +314,12 @@ void SpectrumManager::SetBsyncColor(int color_this_node)
 	m_repository->SetRxChannel(m_nodeId, color_this_node);
 }
 
-
+void SpectrumManager::SetTxColor (int color_this_node_tx)
+{
+	m_isSensing=false;
+	m_isSwitching = false;
+	m_wifiPhy->SetChannelNumber(color_this_node_tx);
+}
 
 //TransmitEnded: the CR stops transmitting, and starts sensing for PU detection
 void 

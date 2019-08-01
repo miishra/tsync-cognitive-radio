@@ -580,8 +580,8 @@ void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
   if (current_receive_color==-1 && isSMupdated==true)
   {
 	  current_receive_color = (int) server_CAT_received[this->GetNode()->GetId()];
-	  if (current_receive_color<20)
-		  m_spectrumManager->SetBsyncColor(current_receive_color);
+	  //if (current_receive_color<20)
+		  //m_spectrumManager->SetBsyncColor(current_receive_color);
 	  /*if (this->GetNode()->GetId()==6)
 		  m_spectrumManager->SetBsyncColor(10);*/
 	  std::cout << "Current Receive Color for Node: " << this->GetNode()->GetId() << " is: " << current_receive_color << std::endl;
@@ -623,7 +623,17 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 		Bsync_data.s_sent_ts = timestamp;
 		uint8_t *buffer = new uint8_t[sizeof(BsyncData)];
 		memcpy((char*) buffer, &Bsync_data, sizeof(BsyncData));
+
+		//pcpt.SetAttribute()
+
 		Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
+
+		//m_spectrumManager->SetTxColor(server_CAT[server_Vector[i]]);
+
+		//PacketChannelPacketTag pct = ns3::PacketChannelPacketTag((uint16_t) server_CAT[server_Vector[i]]);
+		//std::cout << pct.GetInstanceTypeId() << std::endl;
+		//data->AddPacketTag(pct);
+
 		m_size = sizeof(BsyncData);
 
 		/*Time next_schedule=Seconds(period);//0.000001

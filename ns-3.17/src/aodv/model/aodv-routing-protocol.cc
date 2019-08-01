@@ -156,6 +156,7 @@ RoutingProtocol::RoutingProtocol () :
       m_nb.SetCallback (MakeCallback (&RoutingProtocol::SendRerrWhenBreaksLinkToNextHop, this));
     }
   tot_hello_sent_transport=0;
+  received_sent_colors=false;
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
   m_received_channel_availability = new bool*[aodv_no_su];
   for(int i = 0; i < aodv_no_su; i++)
@@ -1405,9 +1406,9 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 
 	  if (p->GetSize ()>11)
 	  {
-		  //std::cout << p->GetSize () << std::endl;
-		  received_CAT_neighbours = new uint8_t[num_su];
-		  for(int i=0;i<num_su;i++)
+		  //std::cout << num_su << std::endl;
+		  received_CAT_neighbours = new uint8_t[aodv_no_su];
+		  for(int i=0;i<aodv_no_su;i++)
 		  {
 			  received_CAT_neighbours[i]=(int)buffer[11+i];//-1
 			  //memcpy(&received_CAT_neighbours[i], (uint8_t *) (&buffer+ 11+ 4*i), 4);
@@ -1771,6 +1772,7 @@ void
 RoutingProtocol::setSentColors(uint8_t* sent_allotted_colors, int no_su)
 {
   NS_LOG_FUNCTION (this);
+  received_sent_colors=true;
   sent_CAT_neighbours = sent_allotted_colors;
   num_su=no_su;
   /*for(int i=0;i<num_su;i++)
@@ -1803,16 +1805,19 @@ RoutingProtocol::SendHello ()
                                                /*origin=*/ iface.GetLocal (),/*lifetime=*/ Time (AllowedHelloLoss * HelloInterval),
                                                m_crRepository->GetRxChannel(m_ipv4->GetObject <Node>()->GetId()));
       //std::cout << sizeof(m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()]) << std::endl;
-      uint8_t *buffer = new uint8_t[11 + num_su];//seeoff
+      uint8_t *buffer = new uint8_t[11 + aodv_no_su];//seeoff
 
       memcpy((char*) buffer, &m_sent_channel_availability[m_ipv4->GetObject <Node>()->GetId()], 11);
 
       //if (num_su>0)
-      for(int i=11;i<11+num_su;i++)
-    	  buffer[i]=sent_CAT_neighbours[i-11];
+      if (received_sent_colors)
+      {
+    	  for(int i=11;i<11+aodv_no_su;i++)
+			  buffer[i]=sent_CAT_neighbours[i-11];
+      }
       //memcpy((uint8_t*) &buffer[11], (uint8_t*) &sent_CAT_neighbours, num_su);//Sending the CAT from the Source Application
 
-      Ptr<Packet> packet = Create<Packet> (buffer, 11+num_su);//hello packet changed
+      Ptr<Packet> packet = Create<Packet> (buffer, 11+aodv_no_su);//hello packet changed
 
       packet->AddHeader (helloHeader);
       TypeHeader tHeader (AODVTYPE_RREP);

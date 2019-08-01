@@ -149,6 +149,8 @@ public:
 
 	void SetBsyncColor(int color_this_node);
 
+	void SetTxColor (int color_this_node_tx);
+
 private:
 
 	// Spectrum Cycle Timers and Variables

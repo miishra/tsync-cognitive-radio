@@ -22,11 +22,12 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
+  int num_scenarios=1;
   int nNodeArray[10] = {5, 10, 15, 20, 40, 60, 80, 100, 120, 140};
-  double time_taken_array[10];
+  double time_taken_array[num_scenarios];
   std::fstream main_aodv_reader;
 
-  for(int k=0;k<10;k++)
+  for(int k=0;k<num_scenarios;k++)
   {
 	  	//std::remove("./src/aodv/model/AODVparameters.h");
 	    main_aodv_reader.open("./src/aodv/model/AODVparameters.h", ios::out | ios::trunc);
@@ -104,7 +105,7 @@ int main (int argc, char *argv[])
 	    for (int i=0; i<nNodes; i++)
 	    {
 	    	  positionAlloc->Add (Vector (start, 0.0, 0.0));
-	    	  start = start+5;//10
+	    	  start = start+10;//10
 	    }
 	    mobility.SetPositionAllocator (positionAlloc);
 
@@ -275,7 +276,7 @@ int main (int argc, char *argv[])
      //double y;
 
      // Create the 2-D dataset.
-     for (int i=0; i<10; i++)
+     for (int i=0; i<num_scenarios; i++)
        {
          // Calculate the 2-D curve
          //

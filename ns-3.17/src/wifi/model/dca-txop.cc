@@ -797,7 +797,7 @@ DcaTxop::SwitchQueueHandler (void)
 {
   NS_LOG_FUNCTION (this);
   //we must see which channels are TX active, and switch if necessary
-  uint16_t channel = GetNextActiveChannel();
+  uint16_t channel = (uint16_t) rand()%11;//GetNextActiveChannel();
   Time nextQueueSwitch = m_queueUtilizationTime;
   if (m_currentChannel != channel)
   {
