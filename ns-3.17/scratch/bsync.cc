@@ -34,6 +34,10 @@ int main (int argc, char *argv[])
 
   int nNodeArray[9] = {5, 10, 20, 40, 60, 80, 100, 120, 140};
 
+  int color_mode_main[11];
+  for(int k=0;k<11;k++)
+	  color_mode_main[k]=0;
+
   for(int m=0;m<NumSim;m++)
   {
 	  double time_taken_array[num_scenarios];
@@ -260,6 +264,23 @@ int main (int argc, char *argv[])
 
 			main_reader.close();
 
+			std::fstream main_color_reader;
+			main_color_reader.open("colors_allotted.txt", std::fstream::in);
+			line.clear();
+			while (std::getline(main_color_reader, line))
+			{
+			  int node_id;
+			  std::istringstream iss(line);
+			  int temp;
+			  iss >> node_id;
+			  for(int k=0;k<11;k++)
+			  {
+				  iss >> temp;
+				  color_mode_main[k]+=temp;
+			  }
+			}
+			main_color_reader.close();
+
 			int max_time=0;
 			int max_overhead=0;
 			for(int j=0;j<nNodes;j++)
@@ -279,6 +300,9 @@ int main (int argc, char *argv[])
 
 			main_reader.open("results.txt", std::fstream::out | std::fstream::trunc);
 			main_reader.close();
+
+			main_color_reader.open("colors_allotted.txt", std::fstream::out | std::fstream::trunc);
+			main_color_reader.close();
 	  }
 
 	  for (int i=0; i<num_scenarios; i++)
@@ -362,14 +386,6 @@ int main (int argc, char *argv[])
      // Create the 2-D dataset.
      for (int i=0; i<num_scenarios; i++)
        {
-         // Calculate the 2-D curve
-         //
-         //            2
-         //     y  =  x   .
-         //
-         //y = x * x;
-
-         // Add this point.
     	 dataset.Add ((double) nNodeArray[i]*1.0, mean_time[i]);
        }
 
@@ -420,14 +436,6 @@ int main (int argc, char *argv[])
 	  // Create the 2-D dataset.
 	  for (int i=0; i<num_scenarios; i++)
 		{
-		  // Calculate the 2-D curve
-		  //
-		  //            2
-		  //     y  =  x   .
-		  //
-		  //y = x * x;
-
-		  // Add this point.
 		 dataset2.Add ((double) nNodeArray[i]*1.0, mean_overhead[i]);
 		}
 
@@ -442,6 +450,54 @@ int main (int argc, char *argv[])
 
 	  // Close the plot file.
 	  plotFile2.close ();
+
+	  //Create 2-D data and plot
+	  std::string fileNameNoExtensionColor = "ColorDistribution";
+	  std::string FileNameColor        = "ColorDistribution.png";
+	  std::string plotNameColor            = "ColorDistribution.plt";
+	  std::string TitleColor               = "ColorDistribution Plot";
+	  std::string dataplotTitleColor               = "ColorDistribution Data";
+
+	  // Instantiate the plot and set its title.
+	  Gnuplot plot3 (FileNameColor);
+	  plot3.SetTitle (TitleColor);
+
+	  // Make the graphics file, which the plot file will create when it
+	  // is used with Gnuplot, be a PNG file.
+	  plot3.SetTerminal ("png");
+
+	  // Set the labels for each axis.
+	  plot3.SetLegend ("Colors","Number of times it was Allocated");
+
+	  // Set the range for the x axis.
+	  //plot.AppendExtra ("set xrange [0:nNodes]");
+
+	  // Instantiate the dataset, set its title, and make the points be
+	  // plotted along with connecting lines.
+	  Gnuplot2dDataset dataset3;
+	  dataset3.SetTitle (dataplotTitleColor);
+	  dataset3.SetStyle (Gnuplot2dDataset::LINES_POINTS);
+
+	  //double x;
+	  //double y;
+
+	  // Create the 2-D dataset.
+	  for (int i=0; i<11; i++)
+		{
+		 dataset3.Add ((double) i*1.0, color_mode_main[i]);
+		}
+
+	  // Add the dataset to the plot.
+	  plot3.AddDataset (dataset3);
+
+	  // Open the plot file.
+	  std::ofstream plotFile3 (plotNameColor.c_str());
+
+	  // Write the plot file.
+	  plot3.GenerateOutput (plotFile3);
+
+	  // Close the plot file.
+	  plotFile3.close ();
 
   return 0;
 }

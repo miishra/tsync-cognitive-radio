@@ -58,6 +58,9 @@ public:
 
   std::fstream output_server;
 
+  std::fstream output_color_mode;
+  int color_mode[11];
+
   int overhead_per_hello;
   int overhead_sync;
   int tot_hello_sent;

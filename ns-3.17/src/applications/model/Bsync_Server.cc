@@ -177,7 +177,7 @@ void Bsync_Server::color_conflict()
 					  if (*randIt)
 						  server_CAT[get<0>(nodeid_status[i])]= (uint8_t) *randIt;//available_colors.back()
 					  else
-						  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%10+1;
+						  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%11;
 
 					  /*if (get<0>(nodeid_status[i])==3)
 						  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)10;*/
@@ -193,7 +193,7 @@ void Bsync_Server::color_conflict()
 				  }
 				  else
 				  {
-					  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%10+1;
+					  server_CAT[get<0>(nodeid_status[i])]= (uint8_t)std::rand()%11;
 					  server_Vector.push_back(get<0>(nodeid_status[i]));
 				  }
 		  }
@@ -205,7 +205,10 @@ void Bsync_Server::color_conflict()
   for (int j=0;j<no_su;j++)
   {
 	  if (server_CAT[j]!=250 && j!= m_self_node_id)
+	  {
+		  color_mode[(int) server_CAT[j]]++;
 		  cout << "Node: " << j << " with Color: " << (int) server_CAT[j] << "\t";
+	  }
   }
   cout << endl;
   NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
@@ -396,7 +399,10 @@ Bsync_Server::StartApplication (void)
 
   sent_neighbour_channel_availability = new bool[11]();
   for(int i = 0; i < 11; i++)
+  {
 	  sent_neighbour_channel_availability[i]=1;
+	  color_mode[i]=0;
+  }
 
   current_receive_color=-1;
   current_send_color=-1;
@@ -422,6 +428,7 @@ Bsync_Server::StartApplication (void)
   opt_net_Intf=0;
 
   output_server.open ("results.txt", std::fstream::app);
+  output_color_mode.open ("colors_allotted.txt", std::fstream::app);
 
   //m_SetAllottedColorsCallback_Server(server_CAT, tot_su);
 
@@ -628,6 +635,8 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 
 		Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
 
+		//color_mode[server_CAT[server_Vector[i]]]++;
+
 		//m_spectrumManager->SetTxColor(server_CAT[server_Vector[i]]);
 
 		//PacketChannelPacketTag pct = ns3::PacketChannelPacketTag((uint16_t) server_CAT[server_Vector[i]]);
@@ -690,6 +699,12 @@ Bsync_Server::StopApplication ()
   NS_LOG_INFO("Server with node ID: " << this->GetNode()->GetId() << " has total protocol overhead: " << tot_hello_sent*overhead_per_hello + tot_sync_sent*overhead_sync);
   output_server << this->GetNode()->GetId() << "\t" << "S" << "\t" << m_sent << "\t" << m_received << "\t" << timestamp << "\t" << time_to_synchronize << "\t" << tot_sync_sent << "\t" << tot_hello_sent << "\t" << tot_hello_sent*overhead_per_hello + tot_sync_sent*overhead_sync << std::endl;
   output_server.close();
+
+  output_color_mode << this->GetNode()->GetId() << "\t";
+  for(int i = 0; i < 11; i++)
+	  output_color_mode << color_mode[i] << "\t";
+  output_color_mode << std::endl;
+  output_color_mode.close();
 
   if (m_socket != 0)
     {
