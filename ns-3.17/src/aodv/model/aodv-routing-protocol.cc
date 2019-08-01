@@ -1401,8 +1401,12 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 
 	  uint8_t *buffer = new uint8_t[p->GetSize ()];
 	  p->CopyData(buffer, p->GetSize ());
-	  for(int j=0;j<11;j++)
-		  m_received_channel_availability[ptpt.sending_node_id][j] = (bool)buffer[j];//m_ipv4->GetObject <Node>()->GetId()
+
+	  if (foundpt && ptpt.sending_node_id>=0 && p->GetSize ()>=10 && m_received_channel_availability)
+	  {
+		  for(int j=0;j<11;j++)
+			  m_received_channel_availability[ptpt.sending_node_id][j] = (bool)buffer[j];//m_ipv4->GetObject <Node>()->GetId()
+	  }
 
 	  if (p->GetSize ()>11)
 	  {

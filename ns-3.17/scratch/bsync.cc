@@ -22,9 +22,15 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  int num_scenarios=1;
-  int nNodeArray[10] = {5, 10, 15, 20, 40, 60, 80, 100, 120, 140};
+  int num_scenarios=3;
+  int nNodeArray[9] = {5, 10, 20, 40, 60, 80, 100, 120, 140};
   double time_taken_array[num_scenarios];
+  double overhead_taken_array[num_scenarios];
+  for(int k=0;k<num_scenarios;k++)
+  {
+	  time_taken_array[k]=0;
+	  overhead_taken_array[k]=0;
+  }
   std::fstream main_aodv_reader;
 
   for(int k=0;k<num_scenarios;k++)
@@ -48,7 +54,7 @@ int main (int argc, char *argv[])
 	    NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 	    NS_LOG_UNCOND("Number of Nodes in the Scenario: " << nNodes << "\n\n");
 	    NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
-	    double simulation_duration=20.0;
+	    double simulation_duration=100.0;
 
 	    CommandLine cmd;
 
@@ -211,9 +217,15 @@ int main (int argc, char *argv[])
 	    Simulator::Run ();
 	    Simulator::Destroy ();
 
-	    main_reader.open("results.txt", std::fstream::in);
+	    main_reader.open("results.txt", std::fstream::in);//| std::fstream::trunc
 	    int SentBytes[nNodes], ReceivedBytes[nNodes], TotalSyncSent[nNodes], TotalHelloSent[nNodes], TotalOverHeadBytes[nNodes];
 	    double FinalTimestamp[nNodes], TimeToSyncronize[nNodes];
+
+	    for(int l=0;l<nNodes;l++)
+	    {
+	    	SentBytes[l]=0, ReceivedBytes[l]=0, TotalSyncSent[l]=0, TotalHelloSent[l]=0, TotalOverHeadBytes[l]=0;
+	    	FinalTimestamp[l]=0.0, TimeToSyncronize[l]=0.0;
+	    }
 
 	    std::string line;
 	    while (std::getline(main_reader, line))
@@ -234,6 +246,7 @@ int main (int argc, char *argv[])
 	  	  }
 	    }
 	    int max_time=0;
+	    int max_overhead=0;
 	    for(int j=0;j<nNodes;j++)
 	    {
 	    	if (TimeToSyncronize[j]!=10000)
@@ -241,8 +254,13 @@ int main (int argc, char *argv[])
 	    		if (TimeToSyncronize[j]>max_time)
 	    			max_time = TimeToSyncronize[j];
 	    	}
+
+	    	if (TotalOverHeadBytes[j]>max_overhead)
+					max_overhead = TotalOverHeadBytes[j];
 	    }
+
 	    time_taken_array[k]=max_time;
+	    overhead_taken_array[k]=max_overhead;
   }
 
   	 //Create 2-D data and plot
@@ -300,6 +318,64 @@ int main (int argc, char *argv[])
 
      // Close the plot file.
      plotFile.close ();
+
+
+
+     //Create 2-D data and plot
+	  std::string fileNameNoExtension = "TotalOverHeadBytes";
+	  std::string FileName        = "TotalOverHeadBytes.png";
+	  std::string plotName            = "TotalOverHeadBytes.plt";
+	  std::string Title               = "TotalOverHeadBytes Plot";
+	  std::string dataplotTitle               = "TotalOverHeadBytes Data";
+
+	  // Instantiate the plot and set its title.
+	  Gnuplot plot2 (FileName);
+	  plot2.SetTitle (Title);
+
+	  // Make the graphics file, which the plot file will create when it
+	  // is used with Gnuplot, be a PNG file.
+	  plot2.SetTerminal ("png");
+
+	  // Set the labels for each axis.
+	  plot2.SetLegend ("Node IDs","Time Overhead to Synchronize");
+
+	  // Set the range for the x axis.
+	  //plot.AppendExtra ("set xrange [0:nNodes]");
+
+	  // Instantiate the dataset, set its title, and make the points be
+	  // plotted along with connecting lines.
+	  Gnuplot2dDataset dataset2;
+	  dataset2.SetTitle (dataplotTitle);
+	  dataset2.SetStyle (Gnuplot2dDataset::LINES_POINTS);
+
+	  //double x;
+	  //double y;
+
+	  // Create the 2-D dataset.
+	  for (int i=0; i<num_scenarios; i++)
+		{
+		  // Calculate the 2-D curve
+		  //
+		  //            2
+		  //     y  =  x   .
+		  //
+		  //y = x * x;
+
+		  // Add this point.
+		 dataset2.Add ((double) nNodeArray[i]*1.0, overhead_taken_array[i]);
+		}
+
+	  // Add the dataset to the plot.
+	  plot2.AddDataset (dataset2);
+
+	  // Open the plot file.
+	  std::ofstream plotFile2 (plotName.c_str());
+
+	  // Write the plot file.
+	  plot2.GenerateOutput (plotFile2);
+
+	  // Close the plot file.
+	  plotFile2.close ();
 
   return 0;
 }
