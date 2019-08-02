@@ -23,8 +23,8 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  int NumSim = 3;
-  int num_scenarios=3;
+  int NumSim = 1;
+  int num_scenarios=4;
 
   std::vector<double> average_time_taken[num_scenarios];
   std::vector<double> average_overhead_taken[num_scenarios];
@@ -116,13 +116,13 @@ int main (int argc, char *argv[])
 
 			MobilityHelper mobility;
 
-			/*mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
+			mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
 												"X", StringValue ("0.0"),
 												"Y", StringValue ("0.0"),
-												"Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=30]"));*/
+												"Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=30]"));
 
 			// Position our nodes with 110 m in between
-			Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
+			/*Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();
 			double start = 0.0;
 			for (int i=0; i<nNodes; i++)
 			{
@@ -131,13 +131,13 @@ int main (int argc, char *argv[])
 			}
 			mobility.SetPositionAllocator (positionAlloc);
 
-			mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+			mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");*/
 
 			/*mobility.SetPositionAllocator ("ns3::GridPositionAllocator",
-				  "GridWidth", StringValue ("50.0"),
+				  "GridWidth", StringValue ("20.0"),
 				  "MinX", StringValue ("0.0"), "MinY", StringValue ("0.0"), "DeltaX", StringValue ("10.0"),
-				  "DeltaY", StringValue ("10.0"));
-			mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");*/
+				  "DeltaY", StringValue ("10.0"));*/
+			mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 
 			// Read PU file
 			Ptr<PUModel> puModel = CreateObject<PUModel>();
@@ -305,11 +305,12 @@ int main (int argc, char *argv[])
 			main_color_reader.close();
 	  }
 
-	  for (int i=0; i<num_scenarios; i++)
-	  {
-		  average_time_taken[i].push_back(time_taken_array[i]);
-		  average_overhead_taken[i].push_back(overhead_taken_array[i]);
-	  }
+		  for (int i=0; i<num_scenarios; i++)
+		  {
+			  //cout << time_taken_array[i] << "\t" << overhead_taken_array[i] << std::endl;
+			  average_time_taken[i].push_back(time_taken_array[i]);
+			  average_overhead_taken[i].push_back(overhead_taken_array[i]);
+		  }
 
   }
 
@@ -340,6 +341,12 @@ int main (int argc, char *argv[])
 		mean_overhead.push_back(mean);
 		sdv_val_overhead.push_back(stdev);
   	 }
+
+  	for (int i=0; i<num_scenarios; i++)
+	  {
+			cout << mean_time[i] << "\t" << mean_overhead[i] << std::endl;
+			cout << sdv_val_time[i] << "\t" << sdv_val_overhead[i] << std::endl;
+	  }
 
   	for (int i=0; i<num_scenarios; i++)
   	{

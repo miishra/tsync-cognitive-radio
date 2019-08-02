@@ -782,6 +782,11 @@ Bsync_Client::Send (Ptr<Packet> data, int sending_node_id)
   //m_socket_client->Bind();
   m_socket_client->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
 
+
+  /*PacketTypePacketTag bt = ns3::PacketTypePacketTag(CTRL_PACKET);
+  bt.set_node_id(this->GetNode()->GetId());
+  data->AddPacketTag(bt);*/
+
   m_txTrace (data);
   m_socket_client->Send (data);
 
@@ -826,6 +831,19 @@ Bsync_Client::HandleRead (Ptr<Socket> socket)
 	  ++m_received;
 	  uint8_t *buffer = new uint8_t[packet->GetSize ()];
 	  packet->CopyData(buffer, packet->GetSize ());
+
+	  /*if ((int)((BsyncData*) buffer)->type==3 && Simulator::Now().GetSeconds()-((BsyncData*) buffer)->s_sent_ts < 0.5)
+		{
+		  vector<int>::iterator randIt = childvector.begin();
+		  std::cout << "here" << InetSocketAddress::ConvertFrom (from).GetIpv4 () << std::endl;
+		  if (childvector.size()>0)
+		  {
+			  randIt = std::find(childvector.begin(), childvector.end(), ip_nodeid_hash[InetSocketAddress::ConvertFrom (from).GetIpv4 ()]);
+			  if (randIt!=childvector.end())
+				  childvector.erase(randIt);
+		  }
+		}*/
+
       if (InetSocketAddress::IsMatchingType (from))
         {
           NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s client received " << packet->GetSize () << " bytes from " <<

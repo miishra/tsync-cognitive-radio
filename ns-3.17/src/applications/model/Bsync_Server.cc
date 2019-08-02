@@ -527,7 +527,7 @@ double Bsync_Server::increment_decrement(double x, double y)
 
   var1 = (f_simple(x) + e);
   var2 = f_inver(var1);//doubt8*/
-  double epsilon = 0.1;
+  double epsilon = 0.5;
 
   return x+epsilon;
 }
@@ -587,8 +587,8 @@ void Bsync_Server::receivedCAT(uint8_t* received_CAT_server)
   if (current_receive_color==-1 && isSMupdated==true)
   {
 	  current_receive_color = (int) server_CAT_received[this->GetNode()->GetId()];
-	  //if (current_receive_color<20)
-		  //m_spectrumManager->SetBsyncColor(current_receive_color);
+	  if (current_receive_color<20)
+		  m_spectrumManager->SetBsyncColor(current_receive_color);
 	  /*if (this->GetNode()->GetId()==6)
 		  m_spectrumManager->SetBsyncColor(10);*/
 	  std::cout << "Current Receive Color for Node: " << this->GetNode()->GetId() << " is: " << current_receive_color << std::endl;
@@ -634,6 +634,10 @@ void Bsync_Server::transmitasONF(Ptr<Socket> socket)
 		//pcpt.SetAttribute()
 
 		Ptr<Packet> data = Create<Packet> (buffer, sizeof(BsyncData));
+
+		/*PacketTypePacketTag bt = ns3::PacketTypePacketTag(CTRL_PACKET);
+		bt.set_node_id(this->GetNode()->GetId());
+		data->AddPacketTag(bt);*/
 
 		//color_mode[server_CAT[server_Vector[i]]]++;
 
@@ -759,6 +763,18 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       packet->CopyData(buffer, packet->GetSize ());
       //std::string s = std::string((char*)buffer);
 
+      /*if ((int)((BsyncData*) buffer)->type==3 && Simulator::Now().GetSeconds()-((BsyncData*) buffer)->s_sent_ts < 0.5)
+      		{
+      		  vector<int>::iterator randIt = server_Vector.begin();
+      		  std::cout << "here" << InetSocketAddress::ConvertFrom (from).GetIpv4 () << std::endl;
+      		  if (server_Vector.size()>0)
+      		  {
+      			  randIt = std::find(server_Vector.begin(), server_Vector.end(), ip_nodeid_hash[InetSocketAddress::ConvertFrom (from).GetIpv4 ()]);
+      			  if (randIt!=server_Vector.end())
+      				server_Vector.erase(randIt);
+      		  }
+      		}*/
+
       if (Simulator::Now().GetSeconds()-((BsyncData*) buffer)->s_sent_ts < 0.5 && synchronized_flag==false)
       {
     	  time_to_synchronize=Simulator::Now().GetSeconds()-1;
@@ -823,7 +839,7 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
 		  m_state = READY;
 		  Bsync_data.sender=this->GetNode()->GetId();
 		  Bsync_data.type = SYNC_ACK_PACKET;
-		  Bsync_data.r_sent_ts = Simulator::Now ().GetSeconds ();
+		  Bsync_data.r_sent_ts = timestamp;//Simulator::Now ().GetSeconds ()
 		  uint8_t *repbuffer = new uint8_t[sizeof(BsyncData)];
 		  memcpy((char*) repbuffer, &Bsync_data, sizeof(BsyncData));
 		  Ptr<Packet> data = Create<Packet> (repbuffer, sizeof(BsyncData));
