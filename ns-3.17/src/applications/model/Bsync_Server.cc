@@ -50,6 +50,8 @@ NS_OBJECT_ENSURE_REGISTERED (Bsync_Server);
 
 std::map<Ipv4Address, int> ip_nodeid_hash_client;
 
+int num_server_synchronized=0;
+
 void Bsync_Server::calc_node_t()
 {
   NS_LOG_FUNCTION (this);
@@ -779,7 +781,12 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       {
     	  time_to_synchronize=Simulator::Now().GetSeconds()-1;
     	  synchronized_flag=true;
+    	  num_server_synchronized++;
+    	  //Simulator::Schedule (Seconds (0.0), &Bsync_Server::StopApplication, this);
       }
+
+      /*if (num_server_synchronized>tot_su/2)
+    	  Simulator::Schedule (Seconds (0.0), &Bsync_Server::StopApplication, this);*/
 
       if (InetSocketAddress::IsMatchingType (from))
         {

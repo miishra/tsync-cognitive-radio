@@ -310,7 +310,8 @@ int SpectrumManager::GetTotalFreeChannelsNow()
 
 void SpectrumManager::SetBsyncColor(int color_this_node)
 {
-	m_wifiPhy->SetChannelNumber(color_this_node);
+	//if (!(!m_isSwitching && !m_isSensing))
+    m_wifiPhy->SetChannelNumber(color_this_node);
 	m_repository->SetRxChannel(m_nodeId, color_this_node);
 }
 

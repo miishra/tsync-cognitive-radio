@@ -81,6 +81,7 @@ public:
   int m_self_node_id_client=0;
   bool *ConnectedNodeStatus_Client;
   uint8_t* client_CAT;
+  bool neighbour_flag;
 
   int current_client_receive_color;
 

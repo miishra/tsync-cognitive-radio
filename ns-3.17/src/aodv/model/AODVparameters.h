@@ -1,1 +1,1 @@
-int aodv_no_su = 40;
+int aodv_no_su = 100;

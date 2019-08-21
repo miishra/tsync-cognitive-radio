@@ -4,15 +4,15 @@ set title 'ColorDistribution Plot'
 set xlabel 'Colors'
 set ylabel 'Number of times it was Allocated'
 plot '-'  title 'ColorDistribution Data' with linespoints
-0 0
-1 0
-2 0
-3 2
-4 1
-5 3
-6 0
-7 2
-8 1
-9 2
-10 0
+0 1012
+1 1245
+2 1264
+3 1226
+4 1214
+5 1198
+6 1225
+7 1198
+8 1154
+9 1213
+10 1227
 e

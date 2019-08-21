@@ -70,6 +70,7 @@ public:
   int ref_node_ID;
   int tot_hello_sent_transport;
   bool received_sent_colors;
+  int flag_recv=false;
 
   /// c-tor
   RoutingProtocol ();

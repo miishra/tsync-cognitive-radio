@@ -24,7 +24,7 @@ using namespace ns3;
 int main (int argc, char *argv[])
 {
   int NumSim = 1;
-  int num_scenarios=4;
+  int num_scenarios=7;
 
   std::vector<double> average_time_taken[num_scenarios];
   std::vector<double> average_overhead_taken[num_scenarios];
@@ -32,7 +32,7 @@ int main (int argc, char *argv[])
   std::vector<double> conf_interval_time, sdv_val_time, mean_time;
   std::vector<double> conf_interval_overhead, sdv_val_overhead, mean_overhead;
 
-  int nNodeArray[9] = {5, 10, 20, 40, 60, 80, 100, 120, 140};
+  int nNodeArray[9] = {50, 10, 20, 40, 60, 80, 100, 120, 140};
 
   int color_mode_main[11];
   for(int k=0;k<11;k++)
@@ -119,7 +119,7 @@ int main (int argc, char *argv[])
 			mobility.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
 												"X", StringValue ("0.0"),
 												"Y", StringValue ("0.0"),
-												"Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=30]"));
+												"Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=20]"));
 
 			// Position our nodes with 110 m in between
 			/*Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator> ();

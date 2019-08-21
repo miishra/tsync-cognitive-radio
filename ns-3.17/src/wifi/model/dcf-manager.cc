@@ -108,10 +108,13 @@ DcfState::UpdateBackoffSlotsNow (uint32_t nSlots, Time backoffUpdateBound)
 void
 DcfState::StartBackoffNow (uint32_t nSlots)
 {
-  NS_ASSERT (m_backoffSlots == 0);
-  MY_DEBUG ("start backoff=" << nSlots << " slots");
-  m_backoffSlots = nSlots;
-  m_backoffStart = Simulator::Now ();
+  //NS_ASSERT (m_backoffSlots == 0);
+	if(m_backoffSlots > 0)
+	{
+		MY_DEBUG ("start backoff=" << nSlots << " slots");
+		m_backoffSlots = nSlots;
+		m_backoffStart = Simulator::Now ();
+	}
 }
 
 uint32_t

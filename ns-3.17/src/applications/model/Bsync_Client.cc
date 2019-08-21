@@ -189,7 +189,7 @@ void Bsync_Client::color_conflict()
 	  {
 		  for (int j=0;j<11;j++)
 		  	  {
-		  		  if (ConnectedNodeStatus_Client[i]==true)
+		  		  if (ConnectedNodeStatus_Client[i]==true && neighbour_flag)
 		  		  {
 		  			  if (received_neighbour_channel_availability[i][j]==sent_neighbour_channel_availability[j])
 		  				available_colors[i][j]=1;
@@ -334,6 +334,7 @@ Bsync_Client::Bsync_Client ()
   ref_flag=0;
   isSMupdated = false;
   tot_packet_sniffed_rx=0;
+  neighbour_flag=false;
 
   //tot_su=10;
 
@@ -454,6 +455,7 @@ void Bsync_Client::ReceivedNeighbourSNR(Ipv4Address source, int node_id, bool **
 
 	m_SetAllottedColorsCallback_Client(client_CAT, tot_su);*/
 	received_neighbour_channel_availability = received_status_array;
+	neighbour_flag=true;
 
 	/*for(int i=0;i<no_su;i++)
 	    {

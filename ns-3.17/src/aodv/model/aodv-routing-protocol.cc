@@ -159,6 +159,7 @@ RoutingProtocol::RoutingProtocol () :
   received_sent_colors=false;
   //Config::ConnectWithoutContext ("/NodeList/0/DeviceList/*/Phy/MonitorSnifferRx", MakeCallback (&RoutingProtocol::MonitorSniffRxCall, this));
   m_received_channel_availability = new bool*[aodv_no_su];
+  flag_recv=true;
   for(int i = 0; i < aodv_no_su; i++)
   {
 	  m_received_channel_availability[i] = new bool[11]();
@@ -1402,7 +1403,7 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
 	  uint8_t *buffer = new uint8_t[p->GetSize ()];
 	  p->CopyData(buffer, p->GetSize ());
 
-	  if (foundpt && ptpt.sending_node_id>=0 && p->GetSize ()>=10 && m_received_channel_availability)
+	  if (foundpt && ptpt.sending_node_id>=0 && p->GetSize ()>=10 && m_received_channel_availability && flag_recv==true && ptpt.sending_node_id < aodv_no_su)
 	  {
 		  for(int j=0;j<11;j++)
 			  m_received_channel_availability[ptpt.sending_node_id][j] = (bool)buffer[j];//m_ipv4->GetObject <Node>()->GetId()
