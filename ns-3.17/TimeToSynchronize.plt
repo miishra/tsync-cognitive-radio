@@ -1,14 +1,13 @@
 set terminal png
 set output 'TimeToSynchronize.png'
 set title 'TimeToSynchronize Plot'
-set xlabel 'Node IDs'
-set ylabel 'Time Taken to Synchronize'
+set xlabel 'Number of Ordinary Nodes'
+set ylabel 'Time Taken to Synchronize(Seconds)'
 plot '-'  title 'TimeToSynchronize Data' with linespoints
-50 57
-10 60
-20 0
-40 68
-60 0
-80 61
-100 77
+10 8.1
+20 16.7
+40 23.3
+60 27.9
+80 35.6
+100 37.2
 e

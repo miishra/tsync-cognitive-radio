@@ -1,14 +1,13 @@
 set terminal png
 set output 'TotalOverHeadBytes.png'
 set title 'TotalOverHeadBytes Plot'
-set xlabel 'Node IDs'
-set ylabel 'Time Overhead to Synchronize'
+set xlabel 'Number of Ordinary Nodes'
+set ylabel 'Total Overhead to Synchronize(Bytes)'
 plot '-'  title 'TotalOverHeadBytes Data' with linespoints
-50 188300
-10 41329
-20 4017
-40 155399
-60 7979
-80 307359
-100 385939
+10 9392.7
+20 21463.2
+40 51319.6
+60 74539.3
+80 109530
+100 137752
 e

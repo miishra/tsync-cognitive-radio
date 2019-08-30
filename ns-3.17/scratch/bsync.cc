@@ -23,7 +23,7 @@ using namespace ns3;
 
 int main (int argc, char *argv[])
 {
-  int NumSim = 1;
+  int NumSim = 10;
   int num_scenarios=7;
 
   std::vector<double> average_time_taken[num_scenarios];
@@ -70,7 +70,7 @@ int main (int argc, char *argv[])
 			NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
 			NS_LOG_UNCOND("Number of Nodes in the Scenario: " << nNodes << "\n\n");
 			NS_LOG_UNCOND("\n-----------------------------------------------------------------------------------------------\n");
-			double simulation_duration=100.0;
+			double simulation_duration=40.0;
 
 			CommandLine cmd;
 

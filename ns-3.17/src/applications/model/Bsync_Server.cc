@@ -777,7 +777,7 @@ Bsync_Server::HandleRead (Ptr<Socket> socket)
       		  }
       		}*/
 
-      if (Simulator::Now().GetSeconds()-((BsyncData*) buffer)->s_sent_ts < 0.5 && synchronized_flag==false)
+      if (Simulator::Now().GetSeconds()-((BsyncData*) buffer)->s_sent_ts < 1 && synchronized_flag==false)
       {
     	  time_to_synchronize=Simulator::Now().GetSeconds()-1;
     	  synchronized_flag=true;
